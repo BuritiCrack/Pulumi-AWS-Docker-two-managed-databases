@@ -1,0 +1,62 @@
+# Isolated synthetic test data; no host ports or AWS credentials.
+services:
+  certificates:
+    image: prestashop-lab:test
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        openssl req -x509 -newkey rsa:2048 -nodes -days 1
+        -keyout /certs/server.key -out /certs/server.crt
+        -subj /CN=redis -addext subjectAltName=DNS:redis &&
+        chmod 644 /certs/server.key /certs/server.crt
+    volumes: [certs:/certs]
+  redis:
+    image: redis:7.2-alpine
+    depends_on:
+      certificates:
+        condition: service_completed_successfully
+    command: ["redis-server", "--port", "0", "--tls-port", "6379", "--tls-cert-file", "/certs/server.crt", "--tls-key-file", "/certs/server.key", "--tls-ca-cert-file", "/certs/server.crt", "--tls-auth-clients", "no", "--requirepass", "RedisPassword123!"]
+    volumes: [certs:/certs:ro]
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: RootPassword123!
+      MYSQL_DATABASE: prestashop
+      MYSQL_USER: prestashop
+      MYSQL_PASSWORD: MysqlPassword123!
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pRootPassword123!"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    volumes: [mysql:/var/lib/mysql]
+  shop:
+    image: prestashop-lab:test
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DB_SERVER: mysql
+      DB_USER: prestashop
+      DB_PASSWD: MysqlPassword123!
+      DB_NAME: prestashop
+      PS_INSTALL_AUTO: "1"
+      PS_ERASE_DB: "0"
+      PS_INSTALL_DB: "0"
+      PS_DOMAIN: shop
+      PS_FOLDER_ADMIN: backoffice
+      ADMIN_MAIL: admin@example.test
+      ADMIN_PASSWD: AdminPassword123!
+      REDIS_HOST: redis
+      REDIS_AUTH: RedisPassword123!
+      REDIS_PREFIX: "smoke:"
+      REDIS_CA_FILE: /certs/server.crt
+    volumes:
+      - certs:/certs:ro
+      - shop:/var/www/html
+volumes:
+  certs:
+  mysql:
+  shop:
