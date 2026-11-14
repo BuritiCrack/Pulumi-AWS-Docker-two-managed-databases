@@ -1,0 +1,9 @@
+# Copy to Pulumi.dev.yaml only after initializing a dev stack.
+# Never put plaintext passwords in this file. Use pulumi config set --secret.
+config:
+  aws:region: us-east-1
+  aws:profile: pulumi-prestashop
+  prestashop:labMode: true
+  prestashop:adminEmail: admin@example.com
+  prestashop:allowedCidrs:
+    - 203.0.113.4/32 # Replace with your public IPv4 address; example is not routable.
