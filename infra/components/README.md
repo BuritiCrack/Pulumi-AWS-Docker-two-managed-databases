@@ -33,6 +33,17 @@ Only pin a name after checking state and AWS ownership/uniqueness; changing the
 identifier of an existing database can replace it. The deployment correction was
 made before any RDS instance existed, without deleting other partial resources.
 
+## Image authentication
+
+`ContainerImage` keeps the ECR repository URL in its qualified image name, preserving
+its inferred repository dependency. It does not invoke ECR token lookup or supply
+`Image.registry`: Docker provider v4.10.0 resolves authentication from Docker config
+at runtime. `scripts/ecr-auth.ps1` supplies a fresh command-scoped config with only
+that registry's `ecr-login` helper mapping. It disables the ECR token disk cache,
+scopes helper cache/logs to its own temporary directory, restores prior environment
+on success/failure and removes only that directory. No global Docker config,
+context, host or plaintext login token is changed. See the root README for usage.
+
 Dependencies flow through Inputs/Outputs; explicit dependencies are reserved for
 operational readiness not represented by values (routes, EFS mounts, IAM policies).
 Credentials are Pulumi secrets stored in Secrets Manager, then injected through ECS

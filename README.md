@@ -84,7 +84,7 @@ pulumi config set --path 'allowedCidrs[0]' 'YOUR_PUBLIC_IPV4/32'
 pulumi config set --secret dbPassword
 pulumi config set --secret redisToken
 pulumi config set --secret adminPassword
-pulumi preview
+# Run preview/up inside the ECR credential scope described below.
 ```
 
 Secret commands prompt for their values, keeping them out of shell history.
@@ -149,6 +149,58 @@ this correction was made; never rename an existing database without reviewing it
 replacement/data consequences. Provider v7.24.0 predates the RDS autonaming change
 in [pulumi-aws PR 6437](https://github.com/pulumi/pulumi-aws/pull/6437); the exact
 cause of the observed plan discrepancy is not established by that PR alone.
+
+## Runtime ECR authentication
+
+The image no longer places short-lived ECR credentials in Pulumi inputs. The last
+strict-plan failure differed at `registry.password`; no build/push success was proven.
+Docker provider v4.10.0 reads runtime credentials for the qualified image hostname
+when `registry` is omitted. This source fix is locally tested, not proof of a
+successful saved-plan apply or live shop readiness. Create and inspect a fresh plan;
+never apply the old token-bearing plan or drop `--plan` enforcement.
+
+The existing ignored `infra/.pulumi-artifacts/deploy-local.ps1` now wraps only
+`-Action preview` and `-Action up` with tracked `infra/scripts/ecr-auth.ps1`.
+It requires `docker-credential-ecr-login.exe` on PATH and the existing AWS MSI CLI,
+resolves the registry using STS and the configured profile/region, and fails before
+the update if the helper is unavailable. There is no login-token fallback or install.
+The taught operator path, DPAPI unlock, backend, other actions, and strict
+`--save-plan`/`--plan` commands remain in place. The ignored script must be preserved
+locally; a clone gets the source helper, not the existing operator/state setup.
+
+Regular Pulumi CLI preview/up also need this credential scope. In an already
+configured/unlocked shell, from `infra`, use your configured profile and region:
+
+```powershell
+. ./scripts/ecr-auth.ps1
+if (-not (Get-Command docker-credential-ecr-login.exe -CommandType Application -ErrorAction SilentlyContinue)) {
+    throw 'Required docker-credential-ecr-login.exe is unavailable on PATH'
+}
+$aws = Join-Path $env:ProgramFiles 'Amazon/AWSCLIV2/aws.exe'
+$account = & $aws sts get-caller-identity --query Account --output text
+if ($LASTEXITCODE -ne 0) { throw 'AWS identity lookup failed' }
+if ($account -isnot [string] -or $account -notmatch '^\d{12}$' -or $env:AWS_REGION -notmatch '^[a-z]{2}-[a-z]+-\d+$') {
+    throw 'AWS identity or region metadata is invalid'
+}
+$registry = "$account.dkr.ecr.$($env:AWS_REGION).amazonaws.com"
+Invoke-EcrAuthScope -Registry $registry -Command {
+    pulumi preview --stack dev --save-plan .pulumi-artifacts/plan.json
+    if ($LASTEXITCODE -ne 0) { throw 'Pulumi preview failed' }
+}
+# After inspecting that fresh plan, use the same scope for:
+# pulumi up --stack dev --plan .pulumi-artifacts/plan.json
+# Check $LASTEXITCODE inside the scriptblock and throw on failure, as above.
+```
+
+The temporary Docker config contains only a per-registry `credHelpers` entry, not
+`auths` or a copied home config. `AWS_ECR_DISABLE_CACHE=true` prevents token disk
+caching; `AWS_ECR_CACHE_DIR` isolates helper cache/logs too. These variables and
+`DOCKER_CONFIG` are restored even on failure, and only the fresh owned directory is
+removed. Existing Docker context/host and AWS profile/region are untouched. The
+helper does not unlock Pulumi or configure AWS for a regular CLI caller.
+
+Deterministic helper checks (no AWS, Docker login or credential-helper calls):
+`powershell.exe -NoProfile -File infra/tests/ecr-auth.test.ps1`.
 
 ## Costs and safety
 
