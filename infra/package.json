@@ -1,0 +1,19 @@
+{
+  "name": "prestashop-infrastructure",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@pulumi/aws": "7.24.0",
+    "@pulumi/docker": "4.10.0",
+    "@pulumi/pulumi": "3.276.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2"
+  }
+}

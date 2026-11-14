@@ -1,0 +1,6 @@
+name: prestashop
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Modular AWS PrestaShop lab with RDS MySQL and ElastiCache Redis OSS
