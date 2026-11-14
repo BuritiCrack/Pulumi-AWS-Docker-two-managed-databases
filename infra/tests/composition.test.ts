@@ -28,6 +28,8 @@ test("Entry point composes all blocks and exports only operational outputs", asy
   for (const type of ["prestashop:network:Network", "prestashop:data:Database", "prestashop:data:Cache", "prestashop:compute:Storefront", "prestashop:compute:ContainerImage"]) {
     assert.equal(resources.filter(resource => resource.type === type).length, 1);
   }
+  const database = resources.find(resource => resource.type === "aws:rds/instance:Instance")!;
+  assert.equal(database.inputs.identifier, "shop-mysql-test");
   const task = resources.find(resource => resource.type === "aws:ecs/taskDefinition:TaskDefinition")!;
   const definition = JSON.parse(task.inputs.containerDefinitions)[0];
   assert.equal(definition.environment.find((item: { name: string }) => item.name === "DB_SERVER").value, "mysql.internal");

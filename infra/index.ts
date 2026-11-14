@@ -19,7 +19,9 @@ export = async () => {
   const network = new Network("shop-network", { availabilityZones: [zones.names[0], zones.names[1]] }, opts);
   const dataArgs = { vpcId: network.vpcId, subnetIds: network.dataSubnetIds,
     applicationSecurityGroupId: network.applicationSecurityGroupId, labMode: config.labMode };
-  const database = new Database("shop-mysql", { ...dataArgs, password: config.dbPassword }, opts);
+  const database = new Database("shop-mysql", {
+    ...dataArgs, password: config.dbPassword, identifier: `shop-mysql-${pulumi.getStack()}`,
+  }, opts);
   const cache = new Cache("shop-redis", { ...dataArgs, authToken: config.redisToken }, opts);
   const shop = new Storefront("shop", {
     ...config, vpcId: network.vpcId, publicSubnetIds: network.publicSubnetIds,

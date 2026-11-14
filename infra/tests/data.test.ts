@@ -27,6 +27,7 @@ test("Managed data is private, encrypted and restricted to application tasks", a
   });
   const db = resources.find(r => r.type === "aws:rds/instance:Instance")!;
   assert.equal(db.inputs.engine, "mysql");
+  assert.equal(db.inputs.identifier, undefined, "Omitted identifier retains provider naming");
   assert.equal(db.inputs.publiclyAccessible, false);
   assert.equal(db.inputs.storageEncrypted, true);
   assert.equal(db.inputs.skipFinalSnapshot, true);
@@ -42,4 +43,19 @@ test("Managed data is private, encrypted and restricted to application tasks", a
     assert.equal(group.inputs.ingress[0].cidrBlocks, undefined);
   }
   assert.equal(resources.filter(r => r.type === "aws:secretsmanager/secretVersion:SecretVersion").length, 2);
+});
+
+test("Database forwards an explicit physical identifier without changing other inputs", async () => {
+  const { Database } = await import("../components/database");
+  const db = new Database("fixed-mysql", {
+    vpcId: "vpc-test", subnetIds: ["data-a", "data-b"], applicationSecurityGroupId: "sg-app",
+    password: pulumi.secret("TestPassword123456789!"), labMode: true, identifier: "shop-mysql-dev",
+  });
+  await new Promise(resolve => db.host.apply(resolve));
+  await new Promise(resolve => db.passwordSecretArn.apply(resolve));
+  const instance = resources.find(r => r.type === "aws:rds/instance:Instance" && r.name === "fixed-mysql")!;
+  assert.equal(instance.inputs.identifier, "shop-mysql-dev");
+  assert.equal(instance.inputs.engine, "mysql");
+  assert.equal(instance.inputs.publiclyAccessible, false);
+  assert.equal(instance.inputs.storageEncrypted, true);
 });

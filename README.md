@@ -1,7 +1,7 @@
 # Modular PrestaShop on AWS
 
 Pulumi TypeScript components provision a temporary Docker-based PrestaShop shop,
-RDS MySQL and ElastiCache Redis OSS. **No AWS deployment has been executed.**
+RDS MySQL and ElastiCache Redis OSS. **AWS deployment is partial; live readiness is not yet verified.**
 
 ## Components
 
@@ -50,15 +50,32 @@ AWS and Docker provider versions are pinned separately. The original SDK pin was
 updated after npm audit found vulnerabilities; the updated production dependency
 audit reports zero. Mock tests validate the resource graph, not AWS availability.
 
-## Configure before a future deployment
+## Configuration and local deployment state
 
-These are instructions, not commands executed by this implementation.
+The current `dev` stack uses `infra/.pulumi-artifacts/state`, not Pulumi Cloud.
+Secret values are encrypted; ordinary resource metadata is local JSON. Its generated
+passphrase is protected with Windows user-scoped DPAPI in
+`infra/.pulumi-artifacts/state-passphrase.dpapi`. Neither that directory nor the real
+`infra/Pulumi.dev.yaml` belongs in Git. Preserve the state, protected passphrase and
+stack configuration. The DPAPI file requires the same Windows user context; arrange
+secure passphrase export/recovery before migrating or removing that account.
+
+This workspace has ignored operator helpers. They unlock secrets without printing them
+and select the backend/profile only for the command:
+
+```powershell
+powershell.exe -NoProfile -File infra/.pulumi-artifacts/deploy-local.ps1 -Action outputs
+```
+
+The following commands describe a **fresh setup only**. Do not reinitialize this
+workspace's existing stack or regenerate its credentials. A fresh local stack prompts
+for its own encryption passphrase; store that passphrase securely.
 
 ```powershell
 $env:AWS_PROFILE = "pulumi-prestashop"
 cd infra
-pulumi login
-pulumi stack init dev
+$env:PULUMI_BACKEND_URL = "file://./.pulumi-artifacts/state"
+pulumi stack init dev --secrets-provider passphrase
 pulumi config set aws:profile pulumi-prestashop
 pulumi config set aws:region us-east-1
 pulumi config set labMode true
@@ -110,8 +127,9 @@ Static inspection found no concrete code/security blocker. The prior path/setup 
 Node memory failures remain recorded; serial execution required no system-memory changes.
 An external `.vscode/settings.json` selects the local TypeScript SDK; its origin is
 unknown and it is preserved outside the implementation/proof/review scope. Native
-review and local work-unit finalization are separate. No AWS deployment or runtime
-AWS verification has been performed.
+review and local work-unit finalization are separate. The later RDS naming correction
+also passed independent verification: 6/6 serial tests and typecheck. AWS deployment
+has started but is partial; live AWS runtime verification remains pending.
 
 EFS persists `/var/www/html`. One task runs at a time, including deployments
 (maximum 100%, minimum healthy 0%); updates intentionally have downtime to avoid
@@ -119,6 +137,18 @@ concurrent installers. This does not prove application-level SQL-cache correctne
 under production traffic. Keep the pinned image until upgrades are tested; persisting
 all application files means changing the image does not automatically upgrade PrestaShop.
 The init hook refreshes only the custom adapter and health endpoint.
+
+## Strict-plan deployment recovery
+
+The deployment keeps `--plan` enforcement. After initial partial updates, resource
+state is retained and a fresh preview is inspected before continuing. The stack
+passes a stable RDS identifier through the optional `DatabaseArgs.identifier` input;
+provider naming remains unchanged for other callers that omit it. This avoids
+relying on generated identifiers for this new database. No database existed when
+this correction was made; never rename an existing database without reviewing its
+replacement/data consequences. Provider v7.24.0 predates the RDS autonaming change
+in [pulumi-aws PR 6437](https://github.com/pulumi/pulumi-aws/pull/6437); the exact
+cause of the observed plan discrepancy is not established by that PR alone.
 
 ## Costs and safety
 
@@ -139,9 +169,17 @@ TLS-enforced by this application configuration; Redis and EFS use TLS.
 
 ```powershell
 cd infra
-pulumi destroy
-# Only after successful destruction:
-pulumi stack rm dev
+$env:PULUMI_BACKEND_URL = 'file://./.pulumi-artifacts/state'
+$env:AWS_PROFILE = 'pulumi-prestashop'
+$secure = Get-Content -Raw .pulumi-artifacts/state-passphrase.dpapi | ConvertTo-SecureString
+$pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+try { $env:PULUMI_CONFIG_PASSPHRASE = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer) }
+finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer) }
+try {
+    pulumi destroy --stack dev
+    if ($LASTEXITCODE -eq 0) { pulumi stack rm dev }
+}
+finally { Remove-Item Env:PULUMI_CONFIG_PASSPHRASE -ErrorAction SilentlyContinue }
 ```
 
 Destroy permanently deletes lab data and may require explicit confirmation.

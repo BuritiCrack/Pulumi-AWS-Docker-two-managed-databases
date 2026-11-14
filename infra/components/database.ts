@@ -6,6 +6,7 @@ export interface DatabaseArgs {
   subnetIds: pulumi.Input<pulumi.Input<string>[]>;
   applicationSecurityGroupId: pulumi.Input<string>;
   password: pulumi.Input<string>;
+  identifier?: pulumi.Input<string>;
   labMode: boolean;
 }
 
@@ -33,6 +34,7 @@ export class Database extends pulumi.ComponentResource {
       secretId: secret.id, secretString: password,
     }, child);
     const database = new aws.rds.Instance(name, {
+      identifier: args.identifier,
       engine: "mysql", engineVersion: "8.0", instanceClass: "db.t3.micro",
       allocatedStorage: 20, storageType: "gp3", storageEncrypted: true,
       dbName: this.databaseName, username: this.username, password,

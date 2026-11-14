@@ -23,6 +23,16 @@ not a production reference architecture. Do not use it for real customer data or
 payments. A production deployment needs HTTPS, security hardening, backups,
 application-user privilege separation, HA, and a tested upgrade strategy.
 
+## RDS physical identifier
+
+`DatabaseArgs.identifier` optionally forwards an explicit AWS identifier; omission
+preserves provider naming for existing callers. This stack supplies a stable
+`shop-mysql-<stack>` name so saved update plans do not depend on provider-generated
+RDS names. Stack names must be compatible with AWS RDS identifier constraints.
+Only pin a name after checking state and AWS ownership/uniqueness; changing the
+identifier of an existing database can replace it. The deployment correction was
+made before any RDS instance existed, without deleting other partial resources.
+
 Dependencies flow through Inputs/Outputs; explicit dependencies are reserved for
 operational readiness not represented by values (routes, EFS mounts, IAM policies).
 Credentials are Pulumi secrets stored in Secrets Manager, then injected through ECS
