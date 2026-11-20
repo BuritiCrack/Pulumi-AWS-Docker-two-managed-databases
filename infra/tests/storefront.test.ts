@@ -33,8 +33,42 @@ test("Storefront restricts ingress, injects secrets, persists files and avoids c
   const container = JSON.parse(task.inputs.containerDefinitions)[0];
   assert.deepEqual(container.secrets.map((s: { name: string }) => s.name).sort(), ["ADMIN_PASSWD", "DB_PASSWD", "REDIS_AUTH"]);
   assert.equal(container.environment.some((e: { name: string }) => /PASSWD|AUTH/.test(e.name)), false);
-  assert.equal(container.mountPoints[0].containerPath, "/var/www/html");
-  assert.equal(task.inputs.volumes[0].efsVolumeConfiguration.transitEncryption, "ENABLED");
+  // Keep persistent shop files on the original encrypted, IAM-authorized EFS root.
+  assert.deepEqual(container.mountPoints, [
+    { sourceVolume: "shop", containerPath: "/var/www/html", readOnly: false },
+    { sourceVolume: "symfony-cache", containerPath: "/var/www/html/var/cache", readOnly: false },
+  ]);
+  const filesystem = resources.find(r => r.type === "aws:efs/fileSystem:FileSystem")!;
+  const access = resources.find(r => r.type === "aws:efs/accessPoint:AccessPoint")!;
+  assert.deepEqual(task.inputs.volumes, [
+    { name: "shop", efsVolumeConfiguration: {
+      fileSystemId: filesystem.name + "-id", transitEncryption: "ENABLED",
+      authorizationConfig: { accessPointId: access.name + "-id", iam: "ENABLED" },
+    } },
+    { name: "symfony-cache" },
+  ]);
+  assert.deepEqual(access.inputs.posixUser, { uid: 0, gid: 0 });
+  assert.deepEqual(access.inputs.rootDirectory, {
+    path: "/prestashop", creationInfo: { ownerUid: 33, ownerGid: 33, permissions: "0775" },
+  });
+  assert.equal(filesystem.inputs.encrypted, true);
+  // Storage isolation must not change installation, health, secrets or capacity.
+  assert.deepEqual(Object.fromEntries(container.environment.map((e: { name: string; value: string }) => [e.name, e.value])), {
+    DB_SERVER: "mysql.internal", DB_NAME: "prestashop", DB_USER: "prestashop_admin", DB_PORT: "3306",
+    PS_DOMAIN: "shop.example.test", PS_INSTALL_AUTO: "1", PS_ERASE_DB: "0", PS_INSTALL_DB: "0",
+    PS_DEV_MODE: "0", PS_ENABLE_SSL: "0", PS_FOLDER_ADMIN: "backoffice", ADMIN_MAIL: "admin@example.test",
+    REDIS_HOST: "redis.internal", REDIS_PREFIX: "shop:",
+  });
+  assert.deepEqual(container.secrets.map((s: { valueFrom: string }) => s.valueFrom), [
+    "arn:aws:secretsmanager:db", "arn:aws:secretsmanager:redis", "arn:aws:mock:shop-admin",
+  ]);
+  assert.equal(task.inputs.cpu, "512");
+  assert.equal(task.inputs.memory, "1024");
+  assert.equal(task.inputs.ephemeralStorage, undefined);
+  assert.equal(service.inputs.healthCheckGracePeriodSeconds, 1800);
+  assert.deepEqual(service.inputs.deploymentCircuitBreaker, { enable: true, rollback: true });
+  const target = resources.find(r => r.type === "aws:lb/targetGroup:TargetGroup")!;
+  assert.deepEqual(target.inputs.healthCheck, { path: "/health.php", matcher: "200", interval: 60, timeout: 10 });
   const ingress = resources.find(r => r.type === "aws:ec2/securityGroupRule:SecurityGroupRule")!;
   assert.equal(ingress.inputs.fromPort, 80);
   assert.equal(ingress.inputs.securityGroupId, "sg-app");

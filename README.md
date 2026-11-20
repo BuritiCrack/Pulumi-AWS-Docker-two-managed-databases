@@ -38,7 +38,7 @@ docker build -t prestashop-lab:test docker/prestashop
 From Git Bash/WSL, an optional isolated installed-shop smoke test is:
 
 ```bash
-timeout 300 sh docker/prestashop/tests/smoke.sh
+timeout 600 sh docker/prestashop/tests/smoke.sh
 ```
 
 It creates synthetic MySQL/Redis/PrestaShop containers without host ports and removes
@@ -131,7 +131,20 @@ review and local work-unit finalization are separate. The later RDS naming corre
 also passed independent verification: 6/6 serial tests and typecheck. AWS deployment
 has started but is partial; live AWS runtime verification remains pending.
 
-EFS persists `/var/www/html`. One task runs at a time, including deployments
+EFS persists `/var/www/html`, with only `/var/www/html/var/cache` overlaid by a
+writable task-local volume. Symfony filesystem cache is disposable on task replacement;
+Redis application caching and all other shop persistence remain unchanged. The image
+prepares cache ownership for `www-data` before the inherited installer runs.
+
+This cache isolation change is source-only so far: Docker is unavailable, so the new
+image build and fresh-volume installation smoke are **pending**, not covered by the
+historical smoke results above. The smoke now checks separate root/cache mounts and
+cache writeability as `www-data` before running the normal installer and exact existing
+health/cache tests. Fresh-root hydration (including upstream first-install detection)
+must pass before deployment; this does not yet establish an EFS-related failure cause.
+See [image and smoke details](docker/prestashop/README.md).
+
+One task runs at a time, including deployments
 (maximum 100%, minimum healthy 0%); updates intentionally have downtime to avoid
 concurrent installers. This does not prove application-level SQL-cache correctness
 under production traffic. Keep the pinned image until upgrades are tested; persisting

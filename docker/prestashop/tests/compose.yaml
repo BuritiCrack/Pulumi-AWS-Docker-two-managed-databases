@@ -56,7 +56,9 @@ services:
     volumes:
       - certs:/certs:ro
       - shop:/var/www/html
+      - symfony-cache:/var/www/html/var/cache
 volumes:
   certs:
   mysql:
   shop:
+  symfony-cache:

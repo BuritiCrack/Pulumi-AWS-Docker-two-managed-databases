@@ -109,7 +109,10 @@ export class Storefront extends pulumi.ComponentResource {
         REDIS_HOST: values.redisHost, REDIS_PREFIX: `${name}:`,
       }).map(([name, value]) => ({ name, value })),
       secrets: ["DB_PASSWD", "REDIS_AUTH", "ADMIN_PASSWD"].map((name, index) => ({ name, valueFrom: values.secrets[index] })),
-      mountPoints: [{ sourceVolume: "shop", containerPath: "/var/www/html", readOnly: false }],
+      mountPoints: [
+        { sourceVolume: "shop", containerPath: "/var/www/html", readOnly: false },
+        { sourceVolume: "symfony-cache", containerPath: "/var/www/html/var/cache", readOnly: false },
+      ],
       logConfiguration: { logDriver: "awslogs", options: {
         "awslogs-group": values.logGroup, "awslogs-region": args.region, "awslogs-stream-prefix": "prestashop",
       } },
@@ -118,7 +121,8 @@ export class Storefront extends pulumi.ComponentResource {
       family: name, cpu: "512", memory: "1024", networkMode: "awsvpc", requiresCompatibilities: ["FARGATE"],
       executionRoleArn: execution.arn, taskRoleArn: taskRole.arn, containerDefinitions: containers,
       volumes: [{ name: "shop", efsVolumeConfiguration: { fileSystemId: filesystem.id,
-        transitEncryption: "ENABLED", authorizationConfig: { accessPointId: access.id, iam: "ENABLED" } } }],
+        transitEncryption: "ENABLED", authorizationConfig: { accessPointId: access.id, iam: "ENABLED" } } },
+        { name: "symfony-cache" }],
     }, child);
     const service = new aws.ecs.Service(name, {
       cluster: cluster.arn, taskDefinition: task.arn, launchType: "FARGATE", platformVersion: "1.4.0",
