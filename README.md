@@ -1,7 +1,8 @@
 # Modular PrestaShop on AWS
 
 Pulumi TypeScript components provision a temporary Docker-based PrestaShop shop,
-RDS MySQL and ElastiCache Redis OSS. **AWS deployment is partial; live readiness is not yet verified.**
+RDS MySQL and ElastiCache Redis OSS. **The migrated `dev` stack is intentionally empty;
+no application is currently deployed and live readiness is not verified.**
 
 ## Components
 
@@ -50,44 +51,59 @@ AWS and Docker provider versions are pinned separately. The original SDK pin was
 updated after npm audit found vulnerabilities; the updated production dependency
 audit reports zero. Mock tests validate the resource graph, not AWS availability.
 
-## Configuration and local deployment state
+## Configuration and S3 deployment state
 
-The current `dev` stack uses `infra/.pulumi-artifacts/state`, not Pulumi Cloud.
-Secret values are encrypted; ordinary resource metadata is local JSON. Its generated
-passphrase is protected with Windows user-scoped DPAPI in
-`infra/.pulumi-artifacts/state-passphrase.dpapi`. Neither that directory nor the real
-`infra/Pulumi.dev.yaml` belongs in Git. Preserve the state, protected passphrase and
-stack configuration. The DPAPI file requires the same Windows user context; arrange
-secure passphrase export/recovery before migrating or removing that account.
+`infra/Pulumi.yaml` selects the canonical backend
+`s3://prestashop-pulumi-state-e16207d96f49-us-east-1` for the existing `dev` stack,
+not Pulumi Cloud. The migration preserved encrypted state and the original secret
+provider; it did not deploy the shop. The private, versioned, AES256-encrypted,
+TLS-only bucket was bootstrapped separately, outside the application's `dev` resource
+graph, and persists through shop destruction. S3 server-side encryption does **not**
+replace Pulumi's existing passphrase encryption.
 
-This workspace has ignored operator helpers. They unlock secrets without printing them
-and select the backend/profile only for the command:
-
-```powershell
-powershell.exe -NoProfile -File infra/.pulumi-artifacts/deploy-local.ps1 -Action outputs
-```
-
-The following commands describe a **fresh setup only**. Do not reinitialize this
-workspace's existing stack or regenerate its credentials. A fresh local stack prompts
-for its own encryption passphrase; store that passphrase securely.
+From a Windows PowerShell console, enter `infra` and use process-scoped settings:
 
 ```powershell
-$env:AWS_PROFILE = "pulumi-prestashop"
 cd infra
-$env:PULUMI_BACKEND_URL = "file://./.pulumi-artifacts/state"
-pulumi stack init dev --secrets-provider passphrase
-pulumi config set aws:profile pulumi-prestashop
-pulumi config set aws:region us-east-1
-pulumi config set labMode true
-pulumi config set adminEmail your-email@example.com
-pulumi config set --path 'allowedCidrs[0]' 'YOUR_PUBLIC_IPV4/32'
-pulumi config set --secret dbPassword
-pulumi config set --secret redisToken
-pulumi config set --secret adminPassword
-# Run preview/up inside the ECR credential scope described below.
+$env:AWS_PROFILE = 'pulumi-prestashop'
+$env:AWS_REGION = 'us-east-1'
+Remove-Item Env:PULUMI_BACKEND_URL -ErrorAction SilentlyContinue
+pulumi stack ls
+if ($LASTEXITCODE -ne 0) { throw 'Pulumi stack listing failed' }
+pulumi stack --stack dev
+if ($LASTEXITCODE -ne 0) { throw 'Pulumi stack inspection failed' }
 ```
 
-Secret commands prompt for their values, keeping them out of shell history.
+Removing the stale environment override lets the project backend take effect; do not
+use a global login or put credentials/profile parameters in the committed URL.
+Stack listing is read-only and does not require secret decryption. Commands that
+need encrypted configuration may prompt for the **original** Pulumi passphrase;
+that prompt is not a request to create new credentials. Never print passphrases or
+application passwords. Do not initialize, import, reconfigure or regenerate secrets
+for this existing `dev` stack.
+
+The original passphrase remains protected with Windows user-scoped DPAPI in
+`infra/.pulumi-artifacts/state-passphrase.dpapi`; it and the real
+`infra/Pulumi.dev.yaml` remain local/ignored. Preserve them. DPAPI requires the same
+Windows user context; arrange secure passphrase recovery before removing that account.
+The old `infra/.pulumi-artifacts/state`, its history, local encrypted export and
+backups are retained **only as recovery snapshots**, not a parallel writable backend.
+Recovery is a separately reviewed operation; do not point routine commands at them
+or automatically remove them.
+
+**Do not use the ignored `deploy-local.ps1` or `teardown-local.ps1` as normal
+operators after migration.** They hardcode the old local `PULUMI_BACKEND_URL` and
+target the stale snapshot, not the canonical S3 stack. They are preserved as
+historical/local recovery material, not portable clone setup.
+
+A fresh checkout uses the same project backend with authorized AWS access, but does
+not contain the original local stack configuration or DPAPI recovery material.
+Recover those securely before operations requiring them; do not create a replacement
+`dev` stack or new secrets. `infra/Pulumi.dev.example.yaml` is an example only.
+Backend selection alone does not configure GitHub secrets/configuration or OIDC;
+CI integration remains future scope and is not verified.
+
+For a separately authorized new stack, configuration constraints remain:
 Database passwords: 16–41 letters/digits or `!#$%^&*_-`.
 Redis tokens: 16–128 letters/digits or `!&#$^<>-`.
 Administrator password: at least 12 characters.
@@ -129,7 +145,8 @@ An external `.vscode/settings.json` selects the local TypeScript SDK; its origin
 unknown and it is preserved outside the implementation/proof/review scope. Native
 review and local work-unit finalization are separate. The later RDS naming correction
 also passed independent verification: 6/6 serial tests and typecheck. AWS deployment
-has started but is partial; live AWS runtime verification remains pending.
+was partial at that historical checkpoint; the shop has since been torn down and
+`dev` migrated empty. Live AWS runtime verification remains pending.
 
 EFS persists `/var/www/html`, with only `/var/www/html/var/cache` overlaid by a
 writable task-local volume. Symfony filesystem cache is disposable on task replacement;
@@ -153,6 +170,10 @@ The init hook refreshes only the custom adapter and health endpoint.
 
 ## Strict-plan deployment recovery
 
+This is historical deployment context, not a pending partial deployment to resume.
+For any future authorized deployment, use the canonical S3 setup above and a fresh
+plan; do not resume from the retained local snapshot or old plan artifacts.
+
 The deployment keeps `--plan` enforcement. After initial partial updates, resource
 state is retained and a fresh preview is inspected before continuing. The stack
 passes a stable RDS identifier through the optional `DatabaseArgs.identifier` input;
@@ -172,17 +193,19 @@ when `registry` is omitted. This source fix is locally tested, not proof of a
 successful saved-plan apply or live shop readiness. Create and inspect a fresh plan;
 never apply the old token-bearing plan or drop `--plan` enforcement.
 
-The existing ignored `infra/.pulumi-artifacts/deploy-local.ps1` now wraps only
-`-Action preview` and `-Action up` with tracked `infra/scripts/ecr-auth.ps1`.
-It requires `docker-credential-ecr-login.exe` on PATH and the existing AWS MSI CLI,
-resolves the registry using STS and the configured profile/region, and fails before
-the update if the helper is unavailable. There is no login-token fallback or install.
-The taught operator path, DPAPI unlock, backend, other actions, and strict
-`--save-plan`/`--plan` commands remain in place. The ignored script must be preserved
-locally; a clone gets the source helper, not the existing operator/state setup.
+The tracked `infra/scripts/ecr-auth.ps1` runtime helper remains valid with the
+canonical S3 backend. The ignored `deploy-local.ps1` wrapper is **not** the operator
+path: it hardcodes the stale local backend. Preserve it, but do not run it for S3.
+The invocation below checks for `docker-credential-ecr-login.exe` on PATH and uses
+the existing AWS MSI CLI to resolve the registry through STS and the configured
+profile/region. The tracked helper receives that registry and scopes Docker's runtime
+credential-helper configuration; it does not perform those prerequisite checks itself.
+There is no login-token fallback or install. A clone gets this helper, not the local
+operator/state setup.
 
-Regular Pulumi CLI preview/up also need this credential scope. In an already
-configured/unlocked shell, from `infra`, use your configured profile and region:
+For a separately authorized future preview/up, first use the console setup above
+(including removing `PULUMI_BACKEND_URL`) and unlock with the original passphrase
+when required. From `infra`, preserve strict `--save-plan`/`--plan` enforcement:
 
 ```powershell
 . ./scripts/ecr-auth.ps1
@@ -229,25 +252,34 @@ TLS-enforced by this application configuration; Redis and EFS use TLS.
 - Lab mode disables deletion protection, DB backups and final snapshots; ECR images and secrets are disposable.
 - `labMode=false` enables some retention/HA guards, **not production readiness**. Inspect costs and final snapshot naming before reusing it.
 - RDS, ElastiCache, Fargate, EFS, ALB, public IPv4, logs, storage and transfer can incur charges. No free-tier guarantee.
+- The persistent S3 backend incurs storage, request and retained-version charges even
+  with an empty shop stack. Optional access logging, CloudTrail data events and metrics
+  require separate future scope/cost review; they are not enabled by this change.
 
 ## Cleanup after an authorized deployment
 
+The current S3 `dev` stack is empty; no shop cleanup is needed now. After a future
+separately authorized deployment, use native CLI against the canonical backend,
+**not** `teardown-local.ps1` or the retained local snapshot:
+
 ```powershell
 cd infra
-$env:PULUMI_BACKEND_URL = 'file://./.pulumi-artifacts/state'
 $env:AWS_PROFILE = 'pulumi-prestashop'
-$secure = Get-Content -Raw .pulumi-artifacts/state-passphrase.dpapi | ConvertTo-SecureString
-$pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-try { $env:PULUMI_CONFIG_PASSPHRASE = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer) }
-finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer) }
-try {
-    pulumi destroy --stack dev
-    if ($LASTEXITCODE -eq 0) { pulumi stack rm dev }
-}
-finally { Remove-Item Env:PULUMI_CONFIG_PASSPHRASE -ErrorAction SilentlyContinue }
+$env:AWS_REGION = 'us-east-1'
+Remove-Item Env:PULUMI_BACKEND_URL -ErrorAction SilentlyContinue
+pulumi stack ls
+if ($LASTEXITCODE -ne 0) { throw 'Pulumi stack listing failed' }
+pulumi stack --stack dev
+if ($LASTEXITCODE -ne 0) { throw 'Pulumi stack inspection failed' }
+# Confirm the intended stack/backend before proceeding; use the original passphrase if prompted.
+pulumi destroy --stack dev
+if ($LASTEXITCODE -ne 0) { throw 'Pulumi destroy failed' }
 ```
 
 Destroy permanently deletes lab data and may require explicit confirmation.
-Do not delete the IAM user or stack state before destroying resources.
-Verify resource removal and billing in AWS afterward; stopping a task alone does not stop all charges.
-No destroy, push, PR creation, or deployment is performed automatically.
+Keep the stack record, S3 backend bucket, retained versions, local source history,
+encrypted exports/backups, configuration and DPAPI recovery material; they are not
+automatically removed. Do not delete the IAM user or stack state before destroying
+resources. Verify resource removal and billing in AWS afterward; stopping a task
+alone does not stop all charges. No destroy, stack removal, bucket deletion, push,
+PR creation or deployment is performed automatically.

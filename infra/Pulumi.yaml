@@ -1,4 +1,6 @@
 name: prestashop
+backend:
+  url: s3://prestashop-pulumi-state-e16207d96f49-us-east-1
 runtime:
   name: nodejs
   options:
