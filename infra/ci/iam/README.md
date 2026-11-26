@@ -158,6 +158,49 @@ ECR authorization, and ECS DeregisterTaskDefinition require Resource `*`; those
 statements retain aws:RequestedRegion. No `service:*` actions are emitted.
 Default service parameter groups are read-only graph dependencies.
 
+### Evidenced RDS discovery exception (S1–S2)
+
+Human request (verbatim): "Continua con el fix, y amplia la politica, ademas revisa que no hayan casos similares para que no vuelva a fallar el deploy por algo similar."
+
+The 2026-11-26T07:04:00Z CloudTrail event showed deployment-role
+`rds:DescribeDBInstances` without a DB identifier, denied against `db:*`.
+Both preview and deploy now render that single read action separately against
+`arn:aws:rds:<REGION>:<ACCOUNT>:db:*`, retaining `aws:RequestedRegion` and the
+configured account/us-east-1. This also covers the named DB. No other action,
+write scope, trust, backend permission or declarative resource family changes.
+The generic SAR renderer remains the default; this is not global Resource `*`.
+
+The finite current-read audit found no other evidenced correction: ordinary
+pinned Terraform AWS v6.0.0 RDS subnet-group, EFS filesystem and ElastiCache
+cluster lookups pass identifiers. ELB, log-group, task-definition, DB-engine-version
+and orderable-option discovery reads already use resource-less statements;
+ECS conditional reads and ECR repository scopes stay unchanged. Parameter-group
+and other discovery paths remain uncertain. The exact Pulumi AWS 7.24 bundled
+provider source path was not proven; the event establishes the request, not its
+internal caller. This does not guarantee future deployments cannot fail.
+
+Preview planning passed but update failed; resources may be partially provisioned.
+No deployment retry or live IAM update is performed here. Existing managed-policy
+drift still refuses bootstrap apply; the parent separately owns any guarded
+policy-version update, live readback and deployment decision. To retain exactly
+two managed policies per role within 6144 characters each, resource-less service
+statements are grouped only when Effect, Resource and Condition match exactly;
+only their action sets are combined. Scoped statements, including the separate
+RDS grant, are not merged into that group. This changes statement placement and
+chunk contents, not non-target permissions. Without grouping, the no-boundary
+deploy rendering would require a third, target-only policy. The pre-change
+boundary-enabled deploy baseline already had three policies; the required
+interface now uses deploy-01/02 in both boundary modes, preserving all grants.
+
+Offline CLI tests pin complete non-target per-action/effect/resource/condition
+grants, trust, backend, policy names/ARNs and other bundle metadata against
+pre-change public-CLI fingerprints for all four legacy/immutable-prefix and
+boundary-present/omitted configurations. The baseline normalization accounts
+explicitly for the authorized boundary-enabled three-to-two attachment change;
+no other non-permission metadata is excluded. Tests check two policies per role,
+size limits, the whole target grant and named DB coverage. They do not promise
+byte-identical chunks, verify live policies or establish deployment success.
+
 ## Preview backend evidence (pinned Pulumi 3.212.0)
 
 Public upstream base: `https://github.com/pulumi/pulumi/blob/v3.212.0/pkg/backend/diy/`.

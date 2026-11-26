@@ -27,6 +27,18 @@ def statement(actions, resources, conditions=None):
     return result
 
 
+def coalesce(statements):
+    """Union actions only when every other authorization field is identical."""
+    grouped = {}
+    for item in statements:
+        fields = {key: value for key, value in item.items() if key != "Action"}
+        fields["Resource"] = sorted(set(fields["Resource"]))
+        key = json.dumps(fields, sort_keys=True, separators=(",", ":"))
+        actions = [*grouped[key]["Action"], *item["Action"]] if key in grouped else item["Action"]
+        grouped[key] = {**statement(actions, fields["Resource"], fields.get("Condition")), **fields}
+    return list(grouped.values())
+
+
 def render(account, region, boundary=None, subject_prefix=None):
     if subject_prefix is None:
         subject_prefix = "repo:" + REPOSITORY
@@ -41,6 +53,9 @@ def render(account, region, boundary=None, subject_prefix=None):
     role_arns = [f"arn:aws:iam::{account}:{suffix}" for suffix in resources["iam"]["role"]]
     for mode, subject in [("preview", "pull_request"), ("deploy", "ref:refs/heads/main")]:
         statements = []
+        discovery_reads = []
+        unscoped_statements = []
+        unscoped_position = None
         for service, modes in operations.items():
             if service == "s3":
                 continue  # Backend permissions are separated from application permissions below.
@@ -78,6 +93,12 @@ def render(account, region, boundary=None, subject_prefix=None):
             regional = {"StringEquals": {"aws:RequestedRegion": region}}
             scoped, unscoped = [], []
             for action in sorted(actions):
+                # Observed identifier-less discovery authorizes against db:*, not
+                # the configured DB ID. Keep this read separate from RDS writes.
+                if service == "rds" and action == "DescribeDBInstances":
+                    discovery_reads.append(statement(["rds:DescribeDBInstances"],
+                        [f"arn:aws:rds:{region}:{account}:db:*"], regional))
+                    continue
                 metadata = scopes[service]["actions"][action]
                 (scoped if metadata["resources"] else unscoped).append(service + ":" + action)
             if scoped:
@@ -90,7 +111,15 @@ def render(account, region, boundary=None, subject_prefix=None):
                     arns += [arn + ":*" for arn in arns]
                 statements.append(statement(scoped, arns, regional))
             if unscoped:
-                statements.append(statement(unscoped, ["*"], regional))
+                if unscoped_position is None:
+                    unscoped_position = len(statements)
+                unscoped_statements.append(statement(unscoped, ["*"], regional))
+        # Keep the combined group at its first occurrence: appending it at the
+        # end fragments the statement-boundary packing when a boundary is set.
+        # Only resource-less service statements are grouped; scoped grants stay
+        # separate, including all IAM and application write resource families.
+        if unscoped_position is not None:
+            statements[unscoped_position:unscoped_position] = coalesce(unscoped_statements)
         bucket = "arn:aws:s3:::" + BUCKET
         backend_condition = {"StringEquals": {"s3:ResourceAccount": account}}
         statements.append(statement(["s3:GetBucketLocation", "s3:ListBucket"], [bucket], backend_condition))
@@ -105,6 +134,10 @@ def render(account, region, boundary=None, subject_prefix=None):
         trust = document([{"Effect": "Allow", "Principal": {"Federated": provider},
             "Action": "sts:AssumeRoleWithWebIdentity", "Condition": {"StringEquals": {
                 ISSUER + ":aud": "sts.amazonaws.com", ISSUER + ":sub": f"{subject_prefix}:{subject}"}}}])
+        # Keep the DB-family exception separate from every non-target grant.
+        # Coalescing resource-less statements above preserves the two-policy size
+        # contract, not byte-identical chunk contents or statement positions.
+        statements.extend(discovery_reads)
         policy = document(statements)
         # Customer-managed policies have a 6,144-character document limit. Split at
         # statement boundaries; never weaken a statement to meet a quota.

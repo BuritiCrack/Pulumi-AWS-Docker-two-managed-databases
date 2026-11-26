@@ -1,4 +1,5 @@
 """Behavior tests through the public CLI; all child AWS commands are synthetic."""
+import fnmatch
 import hashlib
 import json
 from pathlib import Path
@@ -12,6 +13,14 @@ ROOT = Path(__file__).resolve().parents[1]
 ACCOUNT = "123456789012"
 REPO = "BuritiCrack/Pulumi-AWS-Docker-two-managed-databases"
 IMMUTABLE_PREFIX = "repo:BuritiCrack@65743671/Pulumi-AWS-Docker-two-managed-databases@1457370075"
+
+def permission_grants(document, exclude=None):
+    """Canonical complete grants, independent of grouping and chunk placement."""
+    return sorted({json.dumps({**s, "Action": action, "Resource": resource},
+                              sort_keys=True, separators=(",", ":"))
+                   for s in document["Statement"] for action in s["Action"]
+                   if action != exclude for resource in s["Resource"]})
+
 
 class BootstrapTests(unittest.TestCase):
     def setUp(self):
@@ -218,6 +227,68 @@ class BootstrapTests(unittest.TestCase):
                 self.assertIn(":policy/prestashop/github-oidc-cicd/", policy["arn"])
                 flattened.extend(policy["document"]["Statement"])
             self.assertEqual(flattened, bundle[mode]["permissions"]["Statement"])
+
+    def test_rds_collection_read_preserves_non_target_bundle(self):
+        # Computed once from the pre-change public CLI in all four configurations:
+        # expand every statement into complete per-action/resource grants, exclude
+        # only DescribeDBInstances, and retain all other bundle fields plus policy
+        # names/ARNs. The boundary-enabled baseline had deploy-03: normalize that
+        # metadata alone to the explicitly required deploy-01/02 interface after
+        # verifying complete grant equality offline. All four cases now require
+        # exactly two named policies below. No permission differences were found.
+        # Managed grants must equal permissions before normalization. No committed
+        # test reads git/history or assumes chunk-byte stability.
+        original = {
+            (False, False): "2113571811eab1c641bf64003bedcef5c92b85c219e913a15885e15be49765fe",
+            (False, True): "0a43d2c8880a4ef3e5639808245d3e4d78e6a25f9b54da4b13c11ce55f91af3a",
+            (True, False): "269d779bef26f97d73923ed058a968e3cb53f29ec2ee4ca61d9062d20e4d0997",
+            (True, True): "63724f9f76accc3b799a27e12b6de3f0776e0dda01bba4b201a3f3ef273fad25",
+        }
+        action = "rds:DescribeDBInstances"
+        collection = f"arn:aws:rds:us-east-1:{ACCOUNT}:db:*"
+        for (boundary, immutable), fingerprint in original.items():
+            with self.subTest(boundary=boundary, immutable=immutable):
+                args = self.args if boundary else self.args[:-2]
+                extra = ["--oidc-subject-prefix", IMMUTABLE_PREFIX] if immutable else []
+                before = self.fixture.read_bytes()
+                result = self.run_cli(*extra, "--aws-cli", str(self.dir / "nonexistent"), args=args)
+                self.assertEqual((result.returncode, result.stderr), (0, ""))
+                bundle = json.loads(result.stdout)
+                self.assertEqual(result.stdout, json.dumps(bundle, sort_keys=True, indent=2) + "\n")
+                self.assertEqual(self.fixture.read_bytes(), before)
+                self.assertFalse(self.output.exists())
+                for mode in ["preview", "deploy"]:
+                    role = bundle[mode]
+                    self.assertEqual([p["name"] for p in role["managed_policies"]],
+                                     [f"prestashop-github-{mode}-{i:02}" for i in [1, 2]])
+                    self.assertEqual([s for p in role["managed_policies"] for s in p["document"]["Statement"]],
+                                     role["permissions"]["Statement"])
+                    self.assertEqual(permission_grants(role["permissions"]), permission_grants({
+                        "Statement": [s for p in role["managed_policies"] for s in p["document"]["Statement"]]}))
+                    for p in role["managed_policies"]:
+                        self.assertLessEqual(len(json.dumps(p["document"], separators=(",", ":"))), 6144)
+                    if mode == "preview":
+                        self.assertTrue(all(a.split(":")[1].startswith(
+                            ("Get", "List", "Describe", "BatchGet", "BatchCheck"))
+                            for s in role["permissions"]["Statement"] for a in s["Action"]))
+                    for doc in [role["permissions"], *(p["document"] for p in role["managed_policies"])]:
+                        target = [s for s in doc["Statement"] if action in s["Action"]]
+                        if doc is role["permissions"] or target:
+                            self.assertEqual(target, [{"Effect": "Allow", "Action": [action],
+                                "Resource": [collection], "Condition": {
+                                    "StringEquals": {"aws:RequestedRegion": "us-east-1"}}}])
+                        # Evaluate the emitted grant for the observed collection and
+                        # the previous named DB, not a locally invented grant pattern.
+                        for resource in ([collection, collection[:-1] + "shop-mysql-dev"] if target else []):
+                            self.assertTrue(any(fnmatch.fnmatchcase(resource, arn)
+                                                for s in target for arn in s["Resource"]))
+                    role["permissions"] = permission_grants(role["permissions"], exclude=action)
+                    self.assertEqual(role["permissions"], permission_grants({"Statement": [
+                        s for p in role["managed_policies"] for s in p["document"]["Statement"]]}, exclude=action))
+                    role["managed_policies"] = [{k: v for k, v in p.items() if k != "document"}
+                                                for p in role["managed_policies"]]
+                canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"))
+                self.assertEqual(hashlib.sha256(canonical.encode()).hexdigest(), fingerprint)
 
     def test_apply_requires_private_fresh_output(self):
         self.rejected(self.run_cli("--apply"), "apply requires private fresh output directory", self.fixture.read_bytes())
