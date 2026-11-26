@@ -1,0 +1,16 @@
+{
+  "ec2": {
+    "internet-gateway": "internet-gateway/*", "network-interface": "network-interface/*",
+    "route-table": "route-table/*", "security-group": "security-group/*",
+    "security-group-rule": "security-group-rule/*", "subnet": "subnet/*", "vpc": "vpc/*"
+  },
+  "rds": {"db": "db:shop-mysql-dev", "subgrp": "subgrp:shop-mysql-subnets-*", "pg": "pg:default.mysql8.0", "snapshot": "snapshot:shop-mysql-final", "tenant-database": "tenant-database:*"},
+  "elasticache": {"cluster": "cluster:shop-redis-*", "replicationgroup": "replicationgroup:shop-redis-*", "subnetgroup": "subnetgroup:shop-redis-subnets-*", "parametergroup": "parametergroup:default.redis7", "snapshot": "snapshot:shop-redis-*"},
+  "ecs": {"cluster": "cluster/shop-*", "service": "service/shop-*/shop-*", "task-definition": "task-definition/shop:*"},
+  "ecr": {"repository": "repository/shop-image-*"},
+  "iam": {"role": ["role/shop-execution-*", "role/shop-task-*"]},
+  "secretsmanager": {"Secret": ["secret:shop-admin-*", "secret:shop-mysql-password-*", "secret:shop-redis-token-*"]},
+  "elasticfilesystem": {"file-system": "file-system/*", "access-point": "access-point/*"},
+  "elasticloadbalancing": {"loadbalancer/app/": "loadbalancer/app/shop-*/*", "listener/app": "listener/app/shop-*/*/*", "targetgroup": "targetgroup/shop-*/*"},
+  "logs": {"log-group": "log-group:shop-*"}
+}

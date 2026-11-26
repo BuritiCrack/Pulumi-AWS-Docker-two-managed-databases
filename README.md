@@ -100,8 +100,8 @@ A fresh checkout uses the same project backend with authorized AWS access, but d
 not contain the original local stack configuration or DPAPI recovery material.
 Recover those securely before operations requiring them; do not create a replacement
 `dev` stack or new secrets. `infra/Pulumi.dev.example.yaml` is an example only.
-Backend selection alone does not configure GitHub secrets/configuration or OIDC;
-CI integration remains future scope and is not verified.
+Backend selection alone does not configure GitHub secrets/configuration or OIDC.
+The workflow below requires separate provisioning; end-to-end CI is not yet verified.
 
 For a separately authorized new stack, configuration constraints remain:
 Database passwords: 16–41 letters/digits or `!#$%^&*_-`.
@@ -113,6 +113,78 @@ An example configuration is in `infra/Pulumi.dev.example.yaml`.
 `preview` reads AWS metadata and may download plugins; it does not validate a running shop.
 A later, separately authorized `pulumi up` will build/push the image and create billable resources.
 Shop and Back Office URLs are stack outputs. Installation may take several minutes.
+
+## GitHub infrastructure CI/CD
+
+`.github/workflows/infrastructure.yml` implements trunk-based work: short-lived
+`feature/*` branches merge through PRs into stable `main`. It does not create,
+protect or delete branches. Configure required validation checks, review/merge
+protections and restrictions on workflow changes separately; internal contributors
+and their code are trusted with preview credentials and encrypted configuration.
+The latest parent inventory confirmed that remote `main` does not exist; the current
+remote default is `feat/prestashop-04-compose`. Before these triggers can execute,
+`main` and this workflow must be created/published through separately authorized
+work, and `main` must be separately protected. This implementation does not change
+remote branches, the default branch or repository settings; the pipeline is not active.
+
+| Event | Behavior |
+|-------|----------|
+| Every PR targeting `main`, including forks | Node 22, locked `npm ci`, typecheck, existing mock tests and offline CI contract tests; only `contents: read`, no secrets/OIDC |
+| Same-repository `feature/*` PR targeting `main` | After validation, OIDC preview role; `pulumi preview --stack dev --non-interactive` |
+| Push to `main` | After validation, OIDC deploy role; current commit creates a fresh saved plan and applies it with mandatory `--plan` enforcement |
+
+No dispatch, fork preview, PR-plan reuse, refresh, stack creation or automatic
+recovery is configured. Main deployments serialize through `prestashop-dev-s3`;
+read-only PR previews use the separate `prestashop-dev-preview` scheduling group.
+Active cancellation is disabled in both. A PR can never replace a pending main
+deployment. A newer main deployment can replace an older *pending* main run:
+GitHub concurrency is not a FIFO queue, but an active deployment is not canceled.
+PR previews need no shared mutation lock: the pinned CLI's S3 preview does not
+write checkpoints/history/metadata or acquire the backend lock, and the preview
+role must deny those writes. Main creates and applies its own fresh enforced plan
+inside the deployment group. Coordinate local operators separately: Actions
+concurrency cannot exclude an external CLI writer.
+
+### Provisioning contract (values never belong in source)
+
+| Repository setting | Required format/source |
+|--------------------|------------------------|
+| Variable `AWS_PREVIEW_ROLE_ARN` | Dedicated OIDC preview role ARN |
+| Variable `AWS_DEPLOY_ROLE_ARN` | Dedicated OIDC main-only deploy role ARN |
+| Secret `PULUMI_STACK_CONFIG` | Original encrypted `Pulumi.dev.yaml` YAML, not plaintext/example configuration |
+| Secret `PULUMI_CONFIG_PASSPHRASE` | Original state passphrase, not DPAPI bytes and not a replacement key |
+
+AWS region is `us-east-1`; backend remains the S3 URL in `infra/Pulumi.yaml`.
+No access keys, local AWS profile or Pulumi Cloud token are used. The runtime
+preflight checks required inputs before AWS federation. `node ci/runtime/stack.cjs
+check-preview` / `check-deploy` validate without tools or writes; `preview` /
+`deploy` are **live operations**, invoked only by the gated jobs from `infra`.
+Encrypted configuration is copied into a private runner-temp directory, with
+mode 0600 files; only the copied `aws:profile` is removed. Original salt/provider,
+ciphertext, local YAML and DPAPI remain unchanged. Child output is deliberately
+suppressed (including on failure); config, state, passphrase and plans are never
+printed, uploaded or cached. Failure emits a generic stage error: investigate
+through a separately authorized secure operator session, never by adding secret
+logging or disabling plan enforcement. Runner-temp files are removed on normal
+completion/failure; the disposable hosted runner is the hard-stop boundary.
+
+Actions are full-commit pinned; Pulumi CLI is 3.212.0. Deployment alone installs
+Docker 28.3.3 and ECR helper v0.10.1 using Go 1.24.4 with checksum-database
+verification. Its fresh Docker config contains only the ECR `credHelpers` entry;
+no inherited Docker config, token fallback or ECR token disk cache is used.
+Preview requires neither Docker builds nor ECR writes: Docker provider v4.10.0
+[SDK defaults `buildOnPreview` to false](https://github.com/pulumi/pulumi-docker/blob/v4.10.0/sdk/nodejs/image.ts#L184),
+and [provider Create/Update skip the build](https://github.com/pulumi/pulumi-docker/blob/v4.10.0/provider/provider.go#L367)
+when [that default is false](https://github.com/pulumi/pulumi-docker/blob/v4.10.0/provider/provider.go#L766).
+The existing image component does not override it. Do not broaden preview ECR
+permissions as a workaround if this behavior changes.
+
+Offline contract check: `python -B -m unittest discover -s infra/ci/tests -p "test_*.py"`
+(requires installed `infra` dependencies). These tests use synthetic secrets and
+stub tools, not AWS or real previews. Publishing the workflow and a separately
+authorized PR/main run are necessary for future end-to-end proof. No push,
+deployment or working-pipeline claim is implied by local checks. Existing S3
+backups, local-wrapper warnings and strict-plan recovery guidance still apply.
 
 ## Redis integration and persistence
 

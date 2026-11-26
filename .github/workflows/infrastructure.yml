@@ -1,0 +1,129 @@
+name: Infrastructure
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions: {}
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: node --test ci/tests/*.test.cjs
+
+  preview:
+    if: >-
+      ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'feature/') }}
+    needs: validate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: prestashop-dev-preview
+      cancel-in-progress: false
+    env:
+      CI_EVENT: ${{ github.event_name }}
+      CI_REPOSITORY: ${{ github.repository }}
+      CI_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+      CI_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      CI_BASE_REF: ${{ github.event.pull_request.base.ref }}
+      AWS_ROLE_ARN: ${{ vars.AWS_PREVIEW_ROLE_ARN }}
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: node ci/runtime/stack.cjs check-preview
+        env:
+          PULUMI_STACK_CONFIG: ${{ secrets.PULUMI_STACK_CONFIG }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+      - uses: pulumi/actions@8582a9e8cc630786854029b4e09281acd6794b58 # v6, install only
+        with:
+          pulumi-version: '3.212.0'
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ vars.AWS_PREVIEW_ROLE_ARN }}
+          unset-current-credentials: true
+      - run: node ci/runtime/stack.cjs preview
+        env:
+          PULUMI_STACK_CONFIG: ${{ secrets.PULUMI_STACK_CONFIG }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
+  deploy:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: validate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: prestashop-dev-s3
+      cancel-in-progress: false
+    env:
+      CI_EVENT: ${{ github.event_name }}
+      AWS_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: node ci/runtime/stack.cjs check-deploy
+        env:
+          PULUMI_STACK_CONFIG: ${{ secrets.PULUMI_STACK_CONFIG }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+      - uses: pulumi/actions@8582a9e8cc630786854029b4e09281acd6794b58 # v6, install only
+        with:
+          pulumi-version: '3.212.0'
+      - uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 # v4.3.0
+        with:
+          version: v28.3.3
+          set-host: true # Fresh DOCKER_CONFIG must not lose the installed daemon endpoint.
+      - name: Install pinned ECR credential helper
+        env:
+          GOTOOLCHAIN: go1.24.4
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          mkdir -p "$RUNNER_TEMP/ecr-bin"
+          GOBIN="$RUNNER_TEMP/ecr-bin" go install github.com/awslabs/amazon-ecr-credential-helper/ecr-login/cli/docker-credential-ecr-login@v0.10.1
+          echo "$RUNNER_TEMP/ecr-bin" >> "$GITHUB_PATH"
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          unset-current-credentials: true
+      - run: node ci/runtime/stack.cjs deploy
+        env:
+          PULUMI_STACK_CONFIG: ${{ secrets.PULUMI_STACK_CONFIG }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}

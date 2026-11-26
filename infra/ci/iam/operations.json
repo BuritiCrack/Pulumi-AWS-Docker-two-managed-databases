@@ -1,0 +1,47 @@
+{
+  "ec2": {
+    "read": "DescribeAvailabilityZones DescribeVpcs DescribeVpcAttribute DescribeSubnets DescribeRouteTables DescribeInternetGateways DescribeSecurityGroups DescribeSecurityGroupRules DescribeTags DescribeNetworkInterfaces DescribeAccountAttributes",
+    "write": "CreateVpc ModifyVpcAttribute DeleteVpc CreateSubnet ModifySubnetAttribute DeleteSubnet CreateInternetGateway AttachInternetGateway DetachInternetGateway DeleteInternetGateway CreateRouteTable DeleteRouteTable CreateRoute ReplaceRoute DeleteRoute AssociateRouteTable ReplaceRouteTableAssociation DisassociateRouteTable CreateSecurityGroup DeleteSecurityGroup AuthorizeSecurityGroupIngress AuthorizeSecurityGroupEgress RevokeSecurityGroupIngress RevokeSecurityGroupEgress CreateTags DeleteTags"
+  },
+  "rds": {
+    "read": "DescribeDBInstances DescribeDBSubnetGroups DescribeDBParameterGroups DescribeDBEngineVersions DescribeOrderableDBInstanceOptions DescribeDBSnapshots ListTagsForResource",
+    "write": "CreateDBInstance ModifyDBInstance DeleteDBInstance CreateDBSubnetGroup ModifyDBSubnetGroup DeleteDBSubnetGroup AddTagsToResource RemoveTagsFromResource"
+  },
+  "elasticache": {
+    "read": "DescribeReplicationGroups DescribeCacheClusters DescribeCacheSubnetGroups DescribeCacheParameterGroups DescribeCacheEngineVersions DescribeSnapshots ListTagsForResource",
+    "write": "CreateReplicationGroup ModifyReplicationGroup DeleteReplicationGroup CreateCacheSubnetGroup ModifyCacheSubnetGroup DeleteCacheSubnetGroup AddTagsToResource RemoveTagsFromResource"
+  },
+  "ecs": {
+    "read": "DescribeClusters DescribeServices DescribeTaskDefinition ListTagsForResource",
+    "write": "CreateCluster UpdateCluster DeleteCluster RegisterTaskDefinition DeregisterTaskDefinition CreateService UpdateService DeleteService TagResource UntagResource"
+  },
+  "ecr": {
+    "read": "DescribeRepositories GetRepositoryPolicy GetLifecyclePolicy ListTagsForResource DescribeImages BatchGetImage GetDownloadUrlForLayer BatchCheckLayerAvailability",
+    "write": "CreateRepository DeleteRepository PutImageScanningConfiguration TagResource UntagResource BatchDeleteImage InitiateLayerUpload UploadLayerPart CompleteLayerUpload PutImage GetAuthorizationToken"
+  },
+  "iam": {
+    "read": "GetRole ListRolePolicies GetRolePolicy ListAttachedRolePolicies ListInstanceProfilesForRole ListRoleTags",
+    "write": "CreateRole DeleteRole UpdateAssumeRolePolicy PutRolePolicy DeleteRolePolicy AttachRolePolicy DetachRolePolicy TagRole UntagRole"
+  },
+  "secretsmanager": {
+    "read": "DescribeSecret GetResourcePolicy ListSecretVersionIds GetSecretValue",
+    "write": "CreateSecret UpdateSecret PutSecretValue UpdateSecretVersionStage DeleteSecret RestoreSecret TagResource UntagResource"
+  },
+  "elasticfilesystem": {
+    "read": "DescribeFileSystems DescribeAccessPoints DescribeMountTargets DescribeMountTargetSecurityGroups DescribeLifecycleConfiguration ListTagsForResource",
+    "write": "CreateFileSystem UpdateFileSystem DeleteFileSystem CreateAccessPoint DeleteAccessPoint CreateMountTarget DeleteMountTarget ModifyMountTargetSecurityGroups TagResource UntagResource"
+  },
+  "elasticloadbalancing": {
+    "read": "DescribeLoadBalancers DescribeLoadBalancerAttributes DescribeTargetGroups DescribeTargetGroupAttributes DescribeListeners DescribeListenerAttributes DescribeTags",
+    "write": "CreateLoadBalancer DeleteLoadBalancer ModifyLoadBalancerAttributes SetSecurityGroups SetSubnets CreateTargetGroup DeleteTargetGroup ModifyTargetGroup ModifyTargetGroupAttributes CreateListener DeleteListener ModifyListener AddTags RemoveTags"
+  },
+  "logs": {
+    "read": "DescribeLogGroups ListTagsForResource ListTagsLogGroup",
+    "write": "CreateLogGroup DeleteLogGroup PutRetentionPolicy DeleteRetentionPolicy TagResource UntagResource"
+  },
+  "s3": {
+    "read": "GetObject HeadObject HeadBucket GetBucketLocation ListObjectsV2",
+    "write": "PutObject DeleteObject CopyObject"
+  },
+  "sts": {"read": "GetCallerIdentity", "write": ""}
+}
