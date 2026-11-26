@@ -188,6 +188,7 @@ def parser():
     p.add_argument("--account-fingerprint", required=True, help="SHA256 of the expected account's ASCII digits")
     p.add_argument("--profile", required=True, help="explicit existing AWS profile; never changed or logged in")
     p.add_argument("--region", required=True, help="must be us-east-1")
+    p.add_argument("--oidc-subject-prefix", help="exact repository OIDC prefix (legacy repo:OWNER/REPO or immutable repo:OWNER@ID/REPO@ID); default is legacy; no context or wildcard")
     p.add_argument("--app-boundary", help="optional parent-vetted existing prestashop-application-boundary ARN; requires separate app integration")
     p.add_argument("--apply", action="store_true", help="PARENT ONLY: inventory then create missing CI provider/roles; otherwise offline render")
     p.add_argument("--output-dir", help="fresh absolute directory in ignored .evidence/ or outside checkout")
@@ -207,7 +208,7 @@ def main():
         require(args.app_boundary is None or
                 args.app_boundary == f"arn:aws:iam::{args.account}:policy/prestashop-application-boundary",
                 "invalid application boundary")
-        bundle = render(args.account, args.region, args.app_boundary)
+        bundle = render(args.account, args.region, args.app_boundary, args.oidc_subject_prefix)
         if args.apply:
             apply(args, bundle)
             sys.stdout.write("IAM bootstrap: applied\n")

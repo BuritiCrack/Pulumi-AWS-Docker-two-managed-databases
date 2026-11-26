@@ -1,5 +1,6 @@
 """Deterministic baseline, not a generated-minimum or runtime completeness claim."""
 import json
+import re
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -26,7 +27,13 @@ def statement(actions, resources, conditions=None):
     return result
 
 
-def render(account, region, boundary=None):
+def render(account, region, boundary=None, subject_prefix=None):
+    if subject_prefix is None:
+        subject_prefix = "repo:" + REPOSITORY
+    owner, repository = REPOSITORY.split("/")
+    immutable = rf"repo:{re.escape(owner)}@[1-9][0-9]*/{re.escape(repository)}@[1-9][0-9]*"
+    if subject_prefix != "repo:" + REPOSITORY and not re.fullmatch(immutable, subject_prefix):
+        raise ValueError("invalid OIDC subject prefix")
     operations, sar, scopes, resources = [load(name + ".json") for name in
                                         ["operations", "sar", "scopes", "resources"]]
     provider = f"arn:aws:iam::{account}:oidc-provider/{ISSUER}"
@@ -97,7 +104,7 @@ def render(account, region, boundary=None):
                                         [bucket + "/" + p for p in state_paths], backend_condition))
         trust = document([{"Effect": "Allow", "Principal": {"Federated": provider},
             "Action": "sts:AssumeRoleWithWebIdentity", "Condition": {"StringEquals": {
-                ISSUER + ":aud": "sts.amazonaws.com", ISSUER + ":sub": f"repo:{REPOSITORY}:{subject}"}}}])
+                ISSUER + ":aud": "sts.amazonaws.com", ISSUER + ":sub": f"{subject_prefix}:{subject}"}}}])
         policy = document(statements)
         # Customer-managed policies have a 6,144-character document limit. Split at
         # statement boundaries; never weaken a statement to meet a quota.

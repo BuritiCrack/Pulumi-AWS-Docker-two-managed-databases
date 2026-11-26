@@ -1,6 +1,6 @@
 # CI IAM baseline and parent-only bootstrap
 
-This unit supports ODD `github-oidc-cicd.md` T1 / S1–S7. It does not provision
+This unit supports ODD `github-oidc-cicd.md` T1 / S1–S7 and T9 / S10. It does not provision
 GitHub secrets, run Pulumi, deploy application resources, or change LabRole.
 Rendering is offline and deterministic; **only `--apply` invokes AWS CLI**.
 Python 3.10+ stdlib only; no SDK, installer, login, profile changes, or shell.
@@ -38,7 +38,33 @@ Offline render to stdout, no AWS process, file output, or credential discovery:
 python -B infra/ci/iam/bootstrap.py --account <ACCOUNT> --account-fingerprint <FINGERPRINT> --profile <EXISTING_PROFILE> --region us-east-1
 ```
 
-Parent-only apply uses the identical arguments plus:
+### Explicit OIDC subject prefix (S10)
+
+For the API-observed immutable prefix, the minimal offline invocation is:
+
+```text
+python -B infra/ci/iam/bootstrap.py --account <ACCOUNT> --account-fingerprint <FINGERPRINT> --profile <EXISTING_PROFILE> --region us-east-1 --oidc-subject-prefix repo:BuritiCrack@65743671/Pulumi-AWS-Docker-two-managed-databases@1457370075
+```
+
+Pass the actual GitHub API-issued `sub_claim_prefix` as configuration. This CLI
+never fetches GitHub metadata or reads a JWT. `use_default=true` does **not** imply
+legacy subjects when `use_immutable_subject=true`. Omitting the option preserves
+legacy `repo:BuritiCrack/Pulumi-AWS-Docker-two-managed-databases`; that same prefix
+is also accepted explicitly. Immutable form requires the exact configured owner
+and repository names, each followed by `@` and a positive decimal ID without
+leading zeros. IDs are supplied by the parent, not verified against GitHub offline.
+Empty/foreign/malformed prefixes, wildcards and appended contexts fail with
+`IAM bootstrap: invalid OIDC subject prefix` (exit 1, no output or AWS process).
+
+Only `StringEquals.sub` changes: preview appends `:pull_request` and deployment
+appends `:ref:refs/heads/main`. Principal, audience and permission policies stay
+unchanged. Existing-role trust drift still refuses apply; **there is no automatic
+trust migration**. The parent separately owns authorized live subject-only updates.
+The observed legacy/immutable mismatch is consistent with the failed federation,
+not proof of the historical failed JWT's subject (that JWT was not recovered).
+Offline tests do not prove live OIDC integration or a successful Pulumi preview.
+
+Parent-only apply uses the identical arguments (including the prefix when needed) plus:
 
 ```text
 --apply --output-dir <ABSOLUTE_FRESH_PRIVATE_DIRECTORY> --private-output-confirmed

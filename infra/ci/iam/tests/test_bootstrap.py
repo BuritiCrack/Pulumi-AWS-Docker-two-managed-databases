@@ -11,6 +11,7 @@ import os
 ROOT = Path(__file__).resolve().parents[1]
 ACCOUNT = "123456789012"
 REPO = "BuritiCrack/Pulumi-AWS-Docker-two-managed-databases"
+IMMUTABLE_PREFIX = "repo:BuritiCrack@65743671/Pulumi-AWS-Docker-two-managed-databases@1457370075"
 
 class BootstrapTests(unittest.TestCase):
     def setUp(self):
@@ -63,6 +64,70 @@ class BootstrapTests(unittest.TestCase):
                     "token.actions.githubusercontent.com:sub": f"repo:{REPO}:{subject}"}}}])
         self.assertEqual(self.fixture.read_bytes(), before)
         self.assertFalse(self.output.exists())
+
+    def test_oidc_subject_prefix_render_changes_only_exact_subjects(self):
+        for args in [self.args, self.args[:-2]]:
+            baseline = self.run_cli(args=args)
+            self.assertEqual((baseline.returncode, baseline.stderr), (0, ""))
+            for prefix in [IMMUTABLE_PREFIX, "repo:" + REPO]:
+                with self.subTest(prefix=prefix, boundary="--app-boundary" in args):
+                    before = self.fixture.read_bytes()
+                    result = self.run_cli("--oidc-subject-prefix", prefix,
+                                          "--aws-cli", str(self.dir / "nonexistent"), args=args)
+                    self.assertEqual((result.returncode, result.stderr), (0, ""))
+                    expected = json.loads(baseline.stdout)
+                    for mode, context in [("preview", "pull_request"), ("deploy", "ref:refs/heads/main")]:
+                        expected[mode]["trust"] = {"Version": "2012-10-17", "Statement": [{
+                            "Effect": "Allow", "Principal": {"Federated":
+                                f"arn:aws:iam::{ACCOUNT}:oidc-provider/token.actions.githubusercontent.com"},
+                            "Action": "sts:AssumeRoleWithWebIdentity", "Condition": {"StringEquals": {
+                                "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                                "token.actions.githubusercontent.com:sub": prefix + ":" + context}}}]}
+                    self.assertEqual(result.stdout, json.dumps(expected, sort_keys=True, indent=2) + "\n")
+                    self.assertEqual(self.fixture.read_bytes(), before)
+                    self.assertFalse(self.output.exists())
+
+    def test_oidc_subject_prefix_rejects_invalid_input_before_transport_or_output(self):
+        invalid = ["", "repo:*", "repo:" + REPO + ":pull_request",
+                   IMMUTABLE_PREFIX + ":ref:refs/heads/main",
+                   "repo:Other/" + REPO.split("/")[1], "repo:BuritiCrack/Other",
+                   IMMUTABLE_PREFIX.replace("BuritiCrack@", "Other@"),
+                   IMMUTABLE_PREFIX.replace("databases@", "Other@"),
+                   IMMUTABLE_PREFIX.replace("65743671", "*"),
+                   IMMUTABLE_PREFIX.replace("1457370075", "?"),
+                   IMMUTABLE_PREFIX.replace("65743671", "0"),
+                   IMMUTABLE_PREFIX.replace("1457370075", "0123"),
+                   IMMUTABLE_PREFIX.replace("65743671", "-1"),
+                   IMMUTABLE_PREFIX.replace("1457370075", "1.5"),
+                   IMMUTABLE_PREFIX.replace("@65743671", ""),
+                   IMMUTABLE_PREFIX.replace("@1457370075", ""),
+                   IMMUTABLE_PREFIX + "\n", " " + IMMUTABLE_PREFIX]
+        self.store({"mutations": 0, "fail": "get-caller-identity"})
+        for prefix in invalid:
+            with self.subTest(prefix=prefix):
+                before = self.fixture.read_bytes()
+                self.rejected(self.run_cli("--oidc-subject-prefix=" + prefix),
+                              "invalid OIDC subject prefix", before)
+                self.rejected(self.apply("--oidc-subject-prefix=" + prefix),
+                              "invalid OIDC subject prefix", before)
+
+    def test_oidc_subject_prefix_apply_create_and_reuse(self):
+        self.args += ["--oidc-subject-prefix", IMMUTABLE_PREFIX]
+        self.test_create_journal_reuse_and_preservation()
+        state = json.loads(self.fixture.read_text())
+        expected = self.rendered()
+        for mode in ["preview", "deploy"]:
+            self.assertEqual(state["roles"][expected[mode]["name"]]["AssumeRolePolicyDocument"],
+                             expected[mode]["trust"])
+
+    def test_oidc_subject_prefix_does_not_migrate_existing_legacy_trust(self):
+        bundle = self.rendered()
+        self.store({"mutations": 0, "roles": {"prestashop-github-preview": {
+            "Arn": f"arn:aws:iam::{ACCOUNT}:role/prestashop-github-preview", "Path": "/",
+            "MaxSessionDuration": 3600, "Tags": bundle["tags"],
+            "AssumeRolePolicyDocument": bundle["preview"]["trust"]}}})
+        self.rejected(self.apply("--oidc-subject-prefix", IMMUTABLE_PREFIX),
+                      "incompatible or externally managed role", self.fixture.read_bytes())
 
     def test_render_without_application_boundary(self):
         bounded = self.rendered()
