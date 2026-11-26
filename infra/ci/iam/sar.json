@@ -1,0 +1,1451 @@
+{
+  "ec2": {
+    "operations": {
+      "AssociateRouteTable": [
+        {
+          "Name": "AssociateRouteTable",
+          "Service": "ec2"
+        }
+      ],
+      "AttachInternetGateway": [
+        {
+          "Name": "AttachInternetGateway",
+          "Service": "ec2"
+        }
+      ],
+      "AuthorizeSecurityGroupEgress": [
+        {
+          "Name": "AuthorizeSecurityGroupEgress",
+          "Service": "ec2"
+        },
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        }
+      ],
+      "AuthorizeSecurityGroupIngress": [
+        {
+          "Name": "AuthorizeSecurityGroupIngress",
+          "Service": "ec2"
+        },
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        }
+      ],
+      "CreateInternetGateway": [
+        {
+          "Name": "CreateInternetGateway",
+          "Service": "ec2"
+        },
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        }
+      ],
+      "CreateRoute": [
+        {
+          "Name": "CreateRoute",
+          "Service": "ec2"
+        }
+      ],
+      "CreateRouteTable": [
+        {
+          "Name": "CreateRouteTable",
+          "Service": "ec2"
+        },
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        }
+      ],
+      "CreateSecurityGroup": [
+        {
+          "Name": "CreateSecurityGroup",
+          "Service": "ec2"
+        },
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        }
+      ],
+      "CreateSubnet": [
+        {
+          "Name": "CreateSubnet",
+          "Service": "ec2"
+        },
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        }
+      ],
+      "CreateTags": [
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        }
+      ],
+      "CreateVpc": [
+        {
+          "Name": "CreateTags",
+          "Service": "ec2"
+        },
+        {
+          "Name": "CreateVpc",
+          "Service": "ec2"
+        }
+      ],
+      "DeleteInternetGateway": [
+        {
+          "Name": "DeleteInternetGateway",
+          "Service": "ec2"
+        }
+      ],
+      "DeleteRoute": [
+        {
+          "Name": "DeleteRoute",
+          "Service": "ec2"
+        }
+      ],
+      "DeleteRouteTable": [
+        {
+          "Name": "DeleteRouteTable",
+          "Service": "ec2"
+        }
+      ],
+      "DeleteSecurityGroup": [
+        {
+          "Name": "DeleteSecurityGroup",
+          "Service": "ec2"
+        }
+      ],
+      "DeleteSubnet": [
+        {
+          "Name": "DeleteSubnet",
+          "Service": "ec2"
+        }
+      ],
+      "DeleteTags": [
+        {
+          "Name": "DeleteTags",
+          "Service": "ec2"
+        }
+      ],
+      "DeleteVpc": [
+        {
+          "Name": "DeleteVpc",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeAccountAttributes": [
+        {
+          "Name": "DescribeAccountAttributes",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeAvailabilityZones": [
+        {
+          "Name": "DescribeAvailabilityZones",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeInternetGateways": [
+        {
+          "Name": "DescribeInternetGateways",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeNetworkInterfaces": [
+        {
+          "Name": "DescribeNetworkInterfaces",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeRouteTables": [
+        {
+          "Name": "DescribeRouteTables",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeSecurityGroupRules": [
+        {
+          "Name": "DescribeSecurityGroupRules",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeSecurityGroups": [
+        {
+          "Name": "DescribeSecurityGroups",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeSubnets": [
+        {
+          "Name": "DescribeSubnets",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeTags": [
+        {
+          "Name": "DescribeTags",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeVpcAttribute": [
+        {
+          "Name": "DescribeVpcAttribute",
+          "Service": "ec2"
+        }
+      ],
+      "DescribeVpcs": [
+        {
+          "Name": "DescribeVpcs",
+          "Service": "ec2"
+        }
+      ],
+      "DetachInternetGateway": [
+        {
+          "Name": "DetachInternetGateway",
+          "Service": "ec2"
+        }
+      ],
+      "DisassociateRouteTable": [
+        {
+          "Name": "DisassociateRouteTable",
+          "Service": "ec2"
+        }
+      ],
+      "ModifySubnetAttribute": [
+        {
+          "Name": "ModifySubnetAttribute",
+          "Service": "ec2"
+        }
+      ],
+      "ModifyVpcAttribute": [
+        {
+          "Name": "ModifyVpcAttribute",
+          "Service": "ec2"
+        }
+      ],
+      "ReplaceRoute": [
+        {
+          "Name": "ReplaceRoute",
+          "Service": "ec2"
+        }
+      ],
+      "ReplaceRouteTableAssociation": [
+        {
+          "Name": "ReplaceRouteTableAssociation",
+          "Service": "ec2"
+        }
+      ],
+      "RevokeSecurityGroupEgress": [
+        {
+          "Name": "RevokeSecurityGroupEgress",
+          "Service": "ec2"
+        }
+      ],
+      "RevokeSecurityGroupIngress": [
+        {
+          "Name": "RevokeSecurityGroupIngress",
+          "Service": "ec2"
+        }
+      ]
+    },
+    "sha256": "18154e8e8044206cc9c169041db5bd0ee87d980a645e15eacf1851659869d678"
+  },
+  "ecr": {
+    "operations": {
+      "BatchCheckLayerAvailability": [
+        {
+          "Name": "BatchCheckLayerAvailability",
+          "Service": "ecr"
+        }
+      ],
+      "BatchDeleteImage": [
+        {
+          "Name": "BatchDeleteImage",
+          "Service": "ecr"
+        }
+      ],
+      "BatchGetImage": [
+        {
+          "Name": "BatchGetImage",
+          "Service": "ecr"
+        },
+        {
+          "Name": "BatchImportUpstreamImage",
+          "Service": "ecr"
+        },
+        {
+          "Name": "CreateRepository",
+          "Service": "ecr"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "ecr"
+        }
+      ],
+      "CompleteLayerUpload": [
+        {
+          "Name": "CompleteLayerUpload",
+          "Service": "ecr"
+        }
+      ],
+      "CreateRepository": [
+        {
+          "Name": "CreateRepository",
+          "Service": "ecr"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "ecr"
+        }
+      ],
+      "DeleteRepository": [
+        {
+          "Name": "DeleteRepository",
+          "Service": "ecr"
+        }
+      ],
+      "DescribeImages": [
+        {
+          "Name": "DescribeImages",
+          "Service": "ecr"
+        }
+      ],
+      "DescribeRepositories": [
+        {
+          "Name": "DescribeRepositories",
+          "Service": "ecr"
+        }
+      ],
+      "GetAuthorizationToken": [
+        {
+          "Name": "GetAuthorizationToken",
+          "Service": "ecr"
+        }
+      ],
+      "GetDownloadUrlForLayer": [
+        {
+          "Name": "BatchImportUpstreamImage",
+          "Service": "ecr"
+        },
+        {
+          "Name": "GetDownloadUrlForLayer",
+          "Service": "ecr"
+        }
+      ],
+      "GetLifecyclePolicy": [
+        {
+          "Name": "GetLifecyclePolicy",
+          "Service": "ecr"
+        }
+      ],
+      "GetRepositoryPolicy": [
+        {
+          "Name": "GetRepositoryPolicy",
+          "Service": "ecr"
+        }
+      ],
+      "InitiateLayerUpload": [
+        {
+          "Name": "InitiateLayerUpload",
+          "Service": "ecr"
+        }
+      ],
+      "ListTagsForResource": [
+        {
+          "Name": "ListTagsForResource",
+          "Service": "ecr"
+        }
+      ],
+      "PutImage": [
+        {
+          "Name": "PutImage",
+          "Service": "ecr"
+        }
+      ],
+      "PutImageScanningConfiguration": [
+        {
+          "Name": "PutImageScanningConfiguration",
+          "Service": "ecr"
+        }
+      ],
+      "TagResource": [
+        {
+          "Name": "TagResource",
+          "Service": "ecr"
+        }
+      ],
+      "UntagResource": [
+        {
+          "Name": "UntagResource",
+          "Service": "ecr"
+        }
+      ],
+      "UploadLayerPart": [
+        {
+          "Name": "UploadLayerPart",
+          "Service": "ecr"
+        }
+      ]
+    },
+    "sha256": "bd92badabf8462ee76fa92f8914d8957a148747e35475e822efaba178651a064"
+  },
+  "ecs": {
+    "operations": {
+      "CreateCluster": [
+        {
+          "Name": "CreateCluster",
+          "Service": "ecs"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "ecs"
+        }
+      ],
+      "CreateService": [
+        {
+          "Name": "CreateService",
+          "Service": "ecs"
+        },
+        {
+          "Context": {
+            "iam:PassedToService": [
+              "ecs-tasks.amazonaws.com",
+              "ecs.amazonaws.com"
+            ]
+          },
+          "Name": "PassRole",
+          "Service": "iam"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "ecs"
+        }
+      ],
+      "DeleteCluster": [
+        {
+          "Name": "DeleteCluster",
+          "Service": "ecs"
+        }
+      ],
+      "DeleteService": [
+        {
+          "Name": "DeleteService",
+          "Service": "ecs"
+        }
+      ],
+      "DeregisterTaskDefinition": [
+        {
+          "Name": "DeregisterTaskDefinition",
+          "Service": "ecs"
+        }
+      ],
+      "DescribeClusters": [
+        {
+          "Name": "DescribeClusters",
+          "Service": "ecs"
+        }
+      ],
+      "DescribeServices": [
+        {
+          "Name": "DescribeServices",
+          "Service": "ecs"
+        }
+      ],
+      "DescribeTaskDefinition": [
+        {
+          "Name": "DescribeTaskDefinition",
+          "Service": "ecs"
+        }
+      ],
+      "ListTagsForResource": [
+        {
+          "Name": "ListTagsForResource",
+          "Service": "ecs"
+        }
+      ],
+      "RegisterTaskDefinition": [
+        {
+          "Context": {
+            "iam:PassedToService": [
+              "ecs-tasks.amazonaws.com"
+            ]
+          },
+          "Name": "PassRole",
+          "Service": "iam"
+        },
+        {
+          "Name": "RegisterTaskDefinition",
+          "Service": "ecs"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "ecs"
+        }
+      ],
+      "TagResource": [
+        {
+          "Name": "TagResource",
+          "Service": "ecs"
+        }
+      ],
+      "UntagResource": [
+        {
+          "Name": "UntagResource",
+          "Service": "ecs"
+        }
+      ],
+      "UpdateCluster": [
+        {
+          "Name": "UpdateCluster",
+          "Service": "ecs"
+        }
+      ],
+      "UpdateService": [
+        {
+          "Context": {
+            "iam:PassedToService": [
+              "ecs-tasks.amazonaws.com",
+              "ecs.amazonaws.com"
+            ]
+          },
+          "Name": "PassRole",
+          "Service": "iam"
+        },
+        {
+          "Name": "UpdateService",
+          "Service": "ecs"
+        }
+      ]
+    },
+    "sha256": "96094c278dce8df1f366468921a1e49489e273102df30d7143396158d50b1b9e"
+  },
+  "elasticache": {
+    "operations": {
+      "AddTagsToResource": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "elasticache"
+        }
+      ],
+      "CreateCacheSubnetGroup": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "elasticache"
+        },
+        {
+          "Name": "CreateCacheSubnetGroup",
+          "Service": "elasticache"
+        }
+      ],
+      "CreateReplicationGroup": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "elasticache"
+        },
+        {
+          "Name": "CreateReplicationGroup",
+          "Service": "elasticache"
+        }
+      ],
+      "DeleteCacheSubnetGroup": [
+        {
+          "Name": "DeleteCacheSubnetGroup",
+          "Service": "elasticache"
+        }
+      ],
+      "DeleteReplicationGroup": [
+        {
+          "Name": "CreateSnapshot",
+          "Service": "elasticache"
+        },
+        {
+          "Name": "DeleteReplicationGroup",
+          "Service": "elasticache"
+        }
+      ],
+      "DescribeCacheClusters": [
+        {
+          "Name": "DescribeCacheClusters",
+          "Service": "elasticache"
+        }
+      ],
+      "DescribeCacheEngineVersions": [
+        {
+          "Name": "DescribeCacheEngineVersions",
+          "Service": "elasticache"
+        }
+      ],
+      "DescribeCacheParameterGroups": [
+        {
+          "Name": "DescribeCacheParameterGroups",
+          "Service": "elasticache"
+        }
+      ],
+      "DescribeCacheSubnetGroups": [
+        {
+          "Name": "DescribeCacheSubnetGroups",
+          "Service": "elasticache"
+        }
+      ],
+      "DescribeReplicationGroups": [
+        {
+          "Name": "DescribeReplicationGroups",
+          "Service": "elasticache"
+        }
+      ],
+      "DescribeSnapshots": [
+        {
+          "Name": "DescribeSnapshots",
+          "Service": "elasticache"
+        }
+      ],
+      "ListTagsForResource": [
+        {
+          "Name": "ListTagsForResource",
+          "Service": "elasticache"
+        }
+      ],
+      "ModifyCacheSubnetGroup": [
+        {
+          "Name": "ModifyCacheSubnetGroup",
+          "Service": "elasticache"
+        }
+      ],
+      "ModifyReplicationGroup": [
+        {
+          "Name": "ModifyReplicationGroup",
+          "Service": "elasticache"
+        }
+      ],
+      "RemoveTagsFromResource": [
+        {
+          "Name": "RemoveTagsFromResource",
+          "Service": "elasticache"
+        }
+      ]
+    },
+    "sha256": "336e0c3091ca0b3a8a908f1571f7df422863ed86296fb624bc72e67727c137e5"
+  },
+  "elasticfilesystem": {
+    "operations": {
+      "CreateAccessPoint": [
+        {
+          "Name": "CreateAccessPoint",
+          "Service": "elasticfilesystem"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "CreateFileSystem": [
+        {
+          "Name": "CreateFileSystem",
+          "Service": "elasticfilesystem"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "CreateMountTarget": [
+        {
+          "Name": "CreateMountTarget",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DeleteAccessPoint": [
+        {
+          "Name": "DeleteAccessPoint",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DeleteFileSystem": [
+        {
+          "Name": "DeleteFileSystem",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DeleteMountTarget": [
+        {
+          "Name": "DeleteMountTarget",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DescribeAccessPoints": [
+        {
+          "Name": "DescribeAccessPoints",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DescribeFileSystems": [
+        {
+          "Name": "DescribeFileSystems",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DescribeLifecycleConfiguration": [
+        {
+          "Name": "DescribeLifecycleConfiguration",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DescribeMountTargetSecurityGroups": [
+        {
+          "Name": "DescribeMountTargetSecurityGroups",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "DescribeMountTargets": [
+        {
+          "Name": "DescribeMountTargets",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "ListTagsForResource": [
+        {
+          "Name": "ListTagsForResource",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "ModifyMountTargetSecurityGroups": [
+        {
+          "Name": "ModifyMountTargetSecurityGroups",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "TagResource": [
+        {
+          "Name": "TagResource",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "UntagResource": [
+        {
+          "Name": "UntagResource",
+          "Service": "elasticfilesystem"
+        }
+      ],
+      "UpdateFileSystem": [
+        {
+          "Name": "UpdateFileSystem",
+          "Service": "elasticfilesystem"
+        }
+      ]
+    },
+    "sha256": "d9b274d8b9856c2df28d41086e27985cb29e73ff46883dfecb9d5dcedd8fbed4"
+  },
+  "elasticloadbalancing": {
+    "operations": {
+      "AddTags": [
+        {
+          "Name": "AddTags",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "CreateListener": [
+        {
+          "Name": "AddTags",
+          "Service": "elasticloadbalancing"
+        },
+        {
+          "Name": "CreateListener",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "CreateLoadBalancer": [
+        {
+          "Name": "AddTags",
+          "Service": "elasticloadbalancing"
+        },
+        {
+          "Name": "CreateLoadBalancer",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "CreateTargetGroup": [
+        {
+          "Name": "AddTags",
+          "Service": "elasticloadbalancing"
+        },
+        {
+          "Name": "CreateTargetGroup",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DeleteListener": [
+        {
+          "Name": "DeleteListener",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DeleteLoadBalancer": [
+        {
+          "Name": "DeleteLoadBalancer",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DeleteTargetGroup": [
+        {
+          "Name": "DeleteTargetGroup",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DescribeListenerAttributes": [
+        {
+          "Name": "DescribeListenerAttributes",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DescribeListeners": [
+        {
+          "Name": "DescribeListeners",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DescribeLoadBalancerAttributes": [
+        {
+          "Name": "DescribeLoadBalancerAttributes",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DescribeLoadBalancers": [
+        {
+          "Name": "DescribeLoadBalancers",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DescribeTags": [
+        {
+          "Name": "DescribeTags",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DescribeTargetGroupAttributes": [
+        {
+          "Name": "DescribeTargetGroupAttributes",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "DescribeTargetGroups": [
+        {
+          "Name": "DescribeTargetGroups",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "ModifyListener": [
+        {
+          "Name": "ModifyListener",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "ModifyLoadBalancerAttributes": [
+        {
+          "Name": "ModifyLoadBalancerAttributes",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "ModifyTargetGroup": [
+        {
+          "Name": "ModifyTargetGroup",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "ModifyTargetGroupAttributes": [
+        {
+          "Name": "ModifyTargetGroupAttributes",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "RemoveTags": [
+        {
+          "Name": "RemoveTags",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "SetSecurityGroups": [
+        {
+          "Name": "SetSecurityGroups",
+          "Service": "elasticloadbalancing"
+        }
+      ],
+      "SetSubnets": [
+        {
+          "Name": "SetSubnets",
+          "Service": "elasticloadbalancing"
+        }
+      ]
+    },
+    "sha256": "b35ee4a7dee6ee916293c333ee02d8725a0991070bdda16ad210433034f3bae3"
+  },
+  "iam": {
+    "operations": {
+      "AttachRolePolicy": [
+        {
+          "Name": "AttachRolePolicy",
+          "Service": "iam"
+        }
+      ],
+      "CreateRole": [
+        {
+          "Name": "CreateRole",
+          "Service": "iam"
+        },
+        {
+          "Name": "TagRole",
+          "Service": "iam"
+        }
+      ],
+      "DeleteRole": [
+        {
+          "Name": "DeleteRole",
+          "Service": "iam"
+        }
+      ],
+      "DeleteRolePolicy": [
+        {
+          "Name": "DeleteRolePolicy",
+          "Service": "iam"
+        }
+      ],
+      "DetachRolePolicy": [
+        {
+          "Name": "DetachRolePolicy",
+          "Service": "iam"
+        }
+      ],
+      "GetRole": [
+        {
+          "Name": "GetRole",
+          "Service": "iam"
+        }
+      ],
+      "GetRolePolicy": [
+        {
+          "Name": "GetRolePolicy",
+          "Service": "iam"
+        }
+      ],
+      "ListAttachedRolePolicies": [
+        {
+          "Name": "ListAttachedRolePolicies",
+          "Service": "iam"
+        }
+      ],
+      "ListInstanceProfilesForRole": [
+        {
+          "Name": "ListInstanceProfilesForRole",
+          "Service": "iam"
+        }
+      ],
+      "ListRolePolicies": [
+        {
+          "Name": "ListRolePolicies",
+          "Service": "iam"
+        }
+      ],
+      "ListRoleTags": [
+        {
+          "Name": "ListRoleTags",
+          "Service": "iam"
+        }
+      ],
+      "PutRolePolicy": [
+        {
+          "Name": "PutRolePolicy",
+          "Service": "iam"
+        }
+      ],
+      "TagRole": [
+        {
+          "Name": "TagRole",
+          "Service": "iam"
+        }
+      ],
+      "UntagRole": [
+        {
+          "Name": "UntagRole",
+          "Service": "iam"
+        }
+      ],
+      "UpdateAssumeRolePolicy": [
+        {
+          "Name": "UpdateAssumeRolePolicy",
+          "Service": "iam"
+        }
+      ]
+    },
+    "sha256": "39267fc0034910ef6754052b39719e7ffc86c446ba3e9a9834436bcc7d4a4ba6"
+  },
+  "logs": {
+    "operations": {
+      "CreateLogGroup": [
+        {
+          "Name": "CreateLogGroup",
+          "Service": "logs"
+        },
+        {
+          "Name": "TagLogGroup",
+          "Service": "logs"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "logs"
+        }
+      ],
+      "DeleteLogGroup": [
+        {
+          "Name": "DeleteLogGroup",
+          "Service": "logs"
+        }
+      ],
+      "DeleteRetentionPolicy": [
+        {
+          "Name": "DeleteRetentionPolicy",
+          "Service": "logs"
+        }
+      ],
+      "DescribeLogGroups": [
+        {
+          "Name": "DescribeLogGroups",
+          "Service": "logs"
+        }
+      ],
+      "ListTagsForResource": [
+        {
+          "Name": "ListTagsForResource",
+          "Service": "logs"
+        }
+      ],
+      "ListTagsLogGroup": [
+        {
+          "Name": "ListTagsLogGroup",
+          "Service": "logs"
+        }
+      ],
+      "PutRetentionPolicy": [
+        {
+          "Name": "PutRetentionPolicy",
+          "Service": "logs"
+        }
+      ],
+      "TagResource": [
+        {
+          "Name": "TagResource",
+          "Service": "logs"
+        }
+      ],
+      "UntagResource": [
+        {
+          "Name": "UntagResource",
+          "Service": "logs"
+        }
+      ]
+    },
+    "sha256": "3c39d1980daecdcd70b6facfcde895c6018266cedd5de3fa7ecc1f2b883cd31a"
+  },
+  "rds": {
+    "operations": {
+      "AddTagsToResource": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "rds"
+        }
+      ],
+      "CreateDBInstance": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "rds"
+        },
+        {
+          "Name": "CreateDBInstance",
+          "Service": "rds"
+        },
+        {
+          "Name": "CreateTenantDatabase",
+          "Service": "rds"
+        },
+        {
+          "Context": {
+            "iam:PassedToService": [
+              "rds-preview.amazonaws.com",
+              "rds.amazonaws.com"
+            ]
+          },
+          "Name": "PassRole",
+          "Service": "iam"
+        }
+      ],
+      "CreateDBSubnetGroup": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "rds"
+        },
+        {
+          "Name": "CreateDBSubnetGroup",
+          "Service": "rds"
+        }
+      ],
+      "DeleteDBInstance": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "rds"
+        },
+        {
+          "Name": "CreateDBSnapshot",
+          "Service": "rds"
+        },
+        {
+          "Name": "DeleteDBInstance",
+          "Service": "rds"
+        },
+        {
+          "Name": "DeleteTenantDatabase",
+          "Service": "rds"
+        }
+      ],
+      "DeleteDBSubnetGroup": [
+        {
+          "Name": "DeleteDBSubnetGroup",
+          "Service": "rds"
+        }
+      ],
+      "DescribeDBEngineVersions": [
+        {
+          "Name": "DescribeDBEngineVersions",
+          "Service": "rds"
+        }
+      ],
+      "DescribeDBInstances": [
+        {
+          "Name": "DescribeDBInstances",
+          "Service": "rds"
+        }
+      ],
+      "DescribeDBParameterGroups": [
+        {
+          "Name": "DescribeDBParameterGroups",
+          "Service": "rds"
+        }
+      ],
+      "DescribeDBSnapshots": [
+        {
+          "Name": "DescribeDBSnapshots",
+          "Service": "rds"
+        }
+      ],
+      "DescribeDBSubnetGroups": [
+        {
+          "Name": "DescribeDBSubnetGroups",
+          "Service": "rds"
+        }
+      ],
+      "DescribeOrderableDBInstanceOptions": [
+        {
+          "Name": "DescribeOrderableDBInstanceOptions",
+          "Service": "rds"
+        }
+      ],
+      "ListTagsForResource": [
+        {
+          "Name": "ListTagsForResource",
+          "Service": "rds"
+        }
+      ],
+      "ModifyDBInstance": [
+        {
+          "Name": "AddTagsToResource",
+          "Service": "rds"
+        },
+        {
+          "Name": "CreateTenantDatabase",
+          "Service": "rds"
+        },
+        {
+          "Name": "ModifyDBInstance",
+          "Service": "rds"
+        },
+        {
+          "Context": {
+            "iam:PassedToService": [
+              "rds-preview.amazonaws.com",
+              "rds.amazonaws.com"
+            ]
+          },
+          "Name": "PassRole",
+          "Service": "iam"
+        }
+      ],
+      "ModifyDBSubnetGroup": [
+        {
+          "Name": "ModifyDBSubnetGroup",
+          "Service": "rds"
+        }
+      ],
+      "RemoveTagsFromResource": [
+        {
+          "Name": "RemoveTagsFromResource",
+          "Service": "rds"
+        }
+      ]
+    },
+    "sha256": "ceba50b061818b19e549760c9deacdcd9961e824f7d0a05225eff1c222e255cc"
+  },
+  "s3": {
+    "operations": {
+      "CopyObject": [
+        {
+          "Name": "GetObject",
+          "Service": "s3"
+        },
+        {
+          "Name": "GetObjectVersion",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObject",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObject",
+          "Service": "s3-object-lambda"
+        },
+        {
+          "Name": "PutObjectAcl",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObjectLegalHold",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObjectRetention",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObjectTagging",
+          "Service": "s3"
+        }
+      ],
+      "DeleteObject": [
+        {
+          "Name": "BypassGovernanceRetention",
+          "Service": "s3"
+        },
+        {
+          "Name": "DeleteObject",
+          "Service": "s3"
+        },
+        {
+          "Name": "DeleteObject",
+          "Service": "s3-object-lambda"
+        },
+        {
+          "Name": "DeleteObjectVersion",
+          "Service": "s3"
+        }
+      ],
+      "GetBucketLocation": [
+        {
+          "Name": "GetBucketLocation",
+          "Service": "s3"
+        }
+      ],
+      "GetObject": [
+        {
+          "Name": "GetObject",
+          "Service": "s3"
+        },
+        {
+          "Name": "GetObject",
+          "Service": "s3-object-lambda"
+        },
+        {
+          "Name": "GetObjectLegalHold",
+          "Service": "s3"
+        },
+        {
+          "Name": "GetObjectRetention",
+          "Service": "s3"
+        },
+        {
+          "Name": "GetObjectTagging",
+          "Service": "s3"
+        },
+        {
+          "Name": "GetObjectVersion",
+          "Service": "s3"
+        }
+      ],
+      "HeadBucket": [
+        {
+          "Name": "ListBucket",
+          "Service": "s3"
+        }
+      ],
+      "HeadObject": [
+        {
+          "Name": "GetObject",
+          "Service": "s3"
+        },
+        {
+          "Name": "GetObject",
+          "Service": "s3-object-lambda"
+        },
+        {
+          "Name": "GetObjectLegalHold",
+          "Service": "s3"
+        },
+        {
+          "Name": "GetObjectRetention",
+          "Service": "s3"
+        }
+      ],
+      "ListObjectsV2": [
+        {
+          "Name": "GetObjectAcl",
+          "Service": "s3"
+        },
+        {
+          "Name": "ListBucket",
+          "Service": "s3"
+        },
+        {
+          "Name": "ListBucket",
+          "Service": "s3-object-lambda"
+        }
+      ],
+      "PutObject": [
+        {
+          "Name": "PutObject",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObject",
+          "Service": "s3-object-lambda"
+        },
+        {
+          "Name": "PutObjectAcl",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObjectLegalHold",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObjectRetention",
+          "Service": "s3"
+        },
+        {
+          "Name": "PutObjectTagging",
+          "Service": "s3"
+        }
+      ]
+    },
+    "sha256": "42a0406559f357e77fad1e4a77c1d3d9aa62bc90da4dd990c13149ae92147c6d"
+  },
+  "secretsmanager": {
+    "operations": {
+      "CreateSecret": [
+        {
+          "Name": "CreateSecret",
+          "Service": "secretsmanager"
+        },
+        {
+          "Name": "PutResourcePolicy",
+          "Service": "secretsmanager"
+        },
+        {
+          "Name": "ReplicateSecretToRegions",
+          "Service": "secretsmanager"
+        },
+        {
+          "Name": "TagResource",
+          "Service": "secretsmanager"
+        }
+      ],
+      "DeleteSecret": [
+        {
+          "Name": "DeleteSecret",
+          "Service": "secretsmanager"
+        }
+      ],
+      "DescribeSecret": [
+        {
+          "Name": "DescribeSecret",
+          "Service": "secretsmanager"
+        }
+      ],
+      "GetResourcePolicy": [
+        {
+          "Name": "GetResourcePolicy",
+          "Service": "secretsmanager"
+        }
+      ],
+      "GetSecretValue": [
+        {
+          "Name": "GetSecretValue",
+          "Service": "secretsmanager"
+        }
+      ],
+      "ListSecretVersionIds": [
+        {
+          "Name": "ListSecretVersionIds",
+          "Service": "secretsmanager"
+        }
+      ],
+      "PutSecretValue": [
+        {
+          "Name": "PutSecretValue",
+          "Service": "secretsmanager"
+        }
+      ],
+      "RestoreSecret": [
+        {
+          "Name": "RestoreSecret",
+          "Service": "secretsmanager"
+        }
+      ],
+      "TagResource": [
+        {
+          "Name": "TagResource",
+          "Service": "secretsmanager"
+        }
+      ],
+      "UntagResource": [
+        {
+          "Name": "UntagResource",
+          "Service": "secretsmanager"
+        }
+      ],
+      "UpdateSecret": [
+        {
+          "Name": "UpdateSecret",
+          "Service": "secretsmanager"
+        }
+      ],
+      "UpdateSecretVersionStage": [
+        {
+          "Name": "UpdateSecretVersionStage",
+          "Service": "secretsmanager"
+        }
+      ]
+    },
+    "sha256": "4849495f1d4085021d9b9380b2cdb2e8874d67456aa3d29393485eb469b1308b"
+  },
+  "sts": {
+    "operations": {
+      "GetCallerIdentity": [
+        {
+          "Name": "GetCallerIdentity",
+          "Service": "sts"
+        }
+      ]
+    },
+    "sha256": "ecfa9428563f5e3591a8badf5781c34a37e9ef01c60fb533369353dd886cdf3b"
+  }
+}
