@@ -33,7 +33,7 @@
   },
   "elasticloadbalancing": {
     "read": "DescribeLoadBalancers DescribeLoadBalancerAttributes DescribeTargetGroups DescribeTargetGroupAttributes DescribeListeners DescribeListenerAttributes DescribeTags",
-    "write": "CreateLoadBalancer DeleteLoadBalancer ModifyLoadBalancerAttributes SetSecurityGroups SetSubnets CreateTargetGroup DeleteTargetGroup ModifyTargetGroup ModifyTargetGroupAttributes CreateListener DeleteListener ModifyListener AddTags RemoveTags"
+    "write": "CreateLoadBalancer DeleteLoadBalancer ModifyLoadBalancerAttributes SetSecurityGroups SetSubnets CreateTargetGroup DeleteTargetGroup ModifyTargetGroup ModifyTargetGroupAttributes CreateListener DeleteListener ModifyListener AddTags RemoveTags DescribeCapacityReservation"
   },
   "logs": {
     "read": "DescribeLogGroups ListTagsForResource ListTagsLogGroup",

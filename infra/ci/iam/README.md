@@ -116,8 +116,10 @@ application role/policy itself. CI roles cannot manage these CI IAM objects.
 
 - `operations.json`: declared graph lifecycle/read operation inventory, including
   provider availability-zone lookup, ECS/ECR/Docker, and current labMode=true.
-- `sar.json`: extracted official API-to-AuthorizedActions records for 182 operations,
-  with full-document SHA256 per service. Source pattern:
+- `sar.json`: original extracted official API-to-AuthorizedActions records for 182
+  operations, with original full-document SHA256 per service. The single manual
+  ELB supplement below is recorded separately, not covered by those hashes.
+  Original source pattern:
   `https://servicereference.us-east-1.amazonaws.com/v1/<service>/<service>.json`.
   This is the official machine Service Authorization Reference, not account APIs.
 - `scopes.json`: relevant official action/resource/condition metadata.
@@ -200,6 +202,37 @@ explicitly for the authorized boundary-enabled three-to-two attachment change;
 no other non-permission metadata is excluded. Tests check two policies per role,
 size limits, the whole target grant and named DB coverage. They do not promise
 byte-identical chunks, verify live policies or establish deployment success.
+
+### Evidenced ELB capacity read (elb-capacity-read S2–S3)
+
+The deployment denial evidences only
+`elasticloadbalancing:DescribeCapacityReservation`. The official
+[ELBv2 authorization table](https://docs.aws.amazon.com/service-authorization/latest/reference/list_elbv2.html#elbv2-DescribeCapacityReservation)
+classifies it as **Read**, with no resource types or action-specific condition
+keys; the [API reference](https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_DescribeCapacityReservation.html)
+identifies the matching operation. Its one-action mapping is a manual supplement
+in `sar.json`, with both sources recorded in `supplemental_sources`; the original
+machine-document hashes and all other metadata are retained, not refreshed.
+`scopes.json` records Read classification and empty resources/conditions.
+
+Only deploy receives this Allow on Resource `*`, retaining the global
+`aws:RequestedRegion = us-east-1` condition. The existing `write` inventory bucket
+means deploy-only operations, not AWS Write classification (it already includes
+ECR GetAuthorizationToken). Keeping the new Read there preserves the entire
+preview bundle; no preview denial was evidenced. No ModifyCapacityReservation
+or other grant is added. Renderer, bootstrap and fake transport are unchanged.
+
+Public-CLI tests cover all four boundary/prefix configurations, pin the entire
+preview and complete non-target grants/trust/backend/metadata against pre-change
+fingerprints, and retain two named policies per role within 6144 characters.
+The prior RDS fingerprints remain unchanged: their normalization now excludes
+only this separately verified ELB addition as well as the original RDS target.
+Tests use fresh synthetic children of the explicitly authorized container
+`C:/Users/jmbur/AppData/Local/Temp/gptBKFWX/gentle-elb-capacity-check01`, selected
+through TMP/TEMP/TMPDIR before Python starts, and remove their children in teardown.
+This source fix does not update live IAM or prove deployment success. Independent
+verification and guarded policy-version updates remain parent-owned; no deployment
+retry is authorized.
 
 ## Preview backend evidence (pinned Pulumi 3.212.0)
 

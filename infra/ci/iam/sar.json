@@ -795,6 +795,12 @@
           "Service": "elasticloadbalancing"
         }
       ],
+      "DescribeCapacityReservation": [
+        {
+          "Name": "DescribeCapacityReservation",
+          "Service": "elasticloadbalancing"
+        }
+      ],
       "DescribeListenerAttributes": [
         {
           "Name": "DescribeListenerAttributes",
@@ -880,7 +886,14 @@
         }
       ]
     },
-    "sha256": "b35ee4a7dee6ee916293c333ee02d8725a0991070bdda16ad210433034f3bae3"
+    "sha256": "b35ee4a7dee6ee916293c333ee02d8725a0991070bdda16ad210433034f3bae3",
+    "supplemental_sources": {
+      "DescribeCapacityReservation": {
+        "access_level": "Read",
+        "authorization": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_elbv2.html#elbv2-DescribeCapacityReservation",
+        "api": "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_DescribeCapacityReservation.html"
+      }
+    }
   },
   "iam": {
     "operations": {

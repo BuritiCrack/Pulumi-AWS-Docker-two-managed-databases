@@ -19,7 +19,8 @@ def permission_grants(document, exclude=None):
     return sorted({json.dumps({**s, "Action": action, "Resource": resource},
                               sort_keys=True, separators=(",", ":"))
                    for s in document["Statement"] for action in s["Action"]
-                   if action != exclude for resource in s["Resource"]})
+                   if action not in ((exclude,) if isinstance(exclude, str) else (exclude or ()))
+                   for resource in s["Resource"]})
 
 
 class BootstrapTests(unittest.TestCase):
@@ -228,6 +229,58 @@ class BootstrapTests(unittest.TestCase):
                 flattened.extend(policy["document"]["Statement"])
             self.assertEqual(flattened, bundle[mode]["permissions"]["Statement"])
 
+    def test_elb_capacity_read_is_deploy_only_and_preserves_bundle(self):
+        # Captured from the previous public CLI before catalog edits. Preserve
+        # all complete grants and bundle metadata except document chunk placement;
+        # preview additionally retains its entire byte-equivalent JSON structure.
+        original = {
+            (False, False): "7d4f2a5078cb543fafdd77043bf2ca23d7de5e35e4d3f17e04698e143a40e12f",
+            (False, True): "cda1a70513623deaab36c5469c7190cde9c06db8b016762cd2409c0398b930a1",
+            (True, False): "e945d7d6b0b5f13bf069a54905b5ca6dfeb550db184a35a9dc39c83837cf70b9",
+            (True, True): "a36f0f86f7513ebaf4229bb9e849165f59ece135219bcd06c6f59dfb4be68a19",
+        }
+        preview_hashes = {
+            False: "aa0a2370e41ac958866be8f4118bac35a65573dc55400c8139b9d6ddce4107a8",
+            True: "f2ff614b6475b8d3337dbb816e6c2e38dffbcae2772edbd1fcd2e21cc298b054",
+        }
+        action = "elasticloadbalancing:DescribeCapacityReservation"
+        for (boundary, immutable), fingerprint in original.items():
+            with self.subTest(boundary=boundary, immutable=immutable):
+                args = self.args if boundary else self.args[:-2]
+                extra = ["--oidc-subject-prefix", IMMUTABLE_PREFIX] if immutable else []
+                before = self.fixture.read_bytes()
+                result = self.run_cli(*extra, "--aws-cli", str(self.dir / "nonexistent"), args=args)
+                self.assertEqual((result.returncode, result.stderr), (0, ""))
+                bundle = json.loads(result.stdout)
+                self.assertEqual(result.stdout, json.dumps(bundle, sort_keys=True, indent=2) + "\n")
+                self.assertEqual(self.fixture.read_bytes(), before)
+                self.assertFalse(self.output.exists())
+                preview = json.dumps(bundle["preview"], sort_keys=True, separators=(",", ":"))
+                self.assertEqual(hashlib.sha256(preview.encode()).hexdigest(), preview_hashes[immutable])
+                for mode in ["preview", "deploy"]:
+                    role = bundle[mode]
+                    policies = role["managed_policies"]
+                    self.assertEqual([p["name"] for p in policies],
+                                     [f"prestashop-github-{mode}-{i:02}" for i in [1, 2]])
+                    managed = {"Statement": [s for p in policies for s in p["document"]["Statement"]]}
+                    self.assertEqual(permission_grants(managed), permission_grants(role["permissions"]))
+                    for p in policies:
+                        self.assertLessEqual(len(json.dumps(p["document"], separators=(",", ":"))), 6144)
+                    target = [json.loads(g) for g in permission_grants(role["permissions"])
+                              if json.loads(g)["Action"] == action]
+                    self.assertEqual(target, [] if mode == "preview" else [{
+                        "Effect": "Allow", "Action": action, "Resource": "*",
+                        "Condition": {"StringEquals": {"aws:RequestedRegion": "us-east-1"}}}])
+                    self.assertIn(json.dumps({"Effect": "Allow",
+                        "Action": "elasticloadbalancing:DescribeLoadBalancers", "Resource": "*",
+                        "Condition": {"StringEquals": {"aws:RequestedRegion": "us-east-1"}}},
+                        sort_keys=True, separators=(",", ":")), permission_grants(role["permissions"]))
+                    role["permissions"] = permission_grants(role["permissions"], exclude=action)
+                    role["managed_policies"] = [{k: v for k, v in p.items() if k != "document"}
+                                                for p in policies]
+                canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"))
+                self.assertEqual(hashlib.sha256(canonical.encode()).hexdigest(), fingerprint)
+
     def test_rds_collection_read_preserves_non_target_bundle(self):
         # Computed once from the pre-change public CLI in all four configurations:
         # expand every statement into complete per-action/resource grants, exclude
@@ -282,9 +335,12 @@ class BootstrapTests(unittest.TestCase):
                         for resource in ([collection, collection[:-1] + "shop-mysql-dev"] if target else []):
                             self.assertTrue(any(fnmatch.fnmatchcase(resource, arn)
                                                 for s in target for arn in s["Resource"]))
-                    role["permissions"] = permission_grants(role["permissions"], exclude=action)
+                    # The separately pinned ELB addition is the sole new exclusion;
+                    # retain all original RDS fingerprints and target assertions.
+                    exclusions = (action, "elasticloadbalancing:DescribeCapacityReservation")
+                    role["permissions"] = permission_grants(role["permissions"], exclude=exclusions)
                     self.assertEqual(role["permissions"], permission_grants({"Statement": [
-                        s for p in role["managed_policies"] for s in p["document"]["Statement"]]}, exclude=action))
+                        s for p in role["managed_policies"] for s in p["document"]["Statement"]]}, exclude=exclusions))
                     role["managed_policies"] = [{k: v for k, v in p.items() if k != "document"}
                                                 for p in role["managed_policies"]]
                 canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"))

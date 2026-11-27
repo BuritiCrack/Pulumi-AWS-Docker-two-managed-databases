@@ -1481,6 +1481,11 @@
           "targetgroup"
         ]
       },
+      "DescribeCapacityReservation": {
+        "access_level": "Read",
+        "conditions": [],
+        "resources": []
+      },
       "DescribeListenerAttributes": {
         "conditions": [],
         "resources": []
