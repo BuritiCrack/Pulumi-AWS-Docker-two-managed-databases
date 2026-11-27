@@ -14,13 +14,21 @@ ACCOUNT = "123456789012"
 REPO = "BuritiCrack/Pulumi-AWS-Docker-two-managed-databases"
 IMMUTABLE_PREFIX = "repo:BuritiCrack@65743671/Pulumi-AWS-Docker-two-managed-databases@1457370075"
 
-def permission_grants(document, exclude=None):
+CACHE_PARAMETER_GRANT = {
+    "Effect": "Allow", "Action": "elasticache:CreateReplicationGroup",
+    "Resource": f"arn:aws:elasticache:us-east-1:{ACCOUNT}:parametergroup:*",
+    "Condition": {"StringEquals": {"aws:RequestedRegion": "us-east-1"}},
+}
+
+
+def permission_grants(document, exclude=None, exclude_grants=()):
     """Canonical complete grants, independent of grouping and chunk placement."""
     return sorted({json.dumps({**s, "Action": action, "Resource": resource},
                               sort_keys=True, separators=(",", ":"))
                    for s in document["Statement"] for action in s["Action"]
                    if action not in ((exclude,) if isinstance(exclude, str) else (exclude or ()))
-                   for resource in s["Resource"]})
+                   for resource in s["Resource"]
+                   if {**s, "Action": action, "Resource": resource} not in exclude_grants})
 
 
 class BootstrapTests(unittest.TestCase):
@@ -229,6 +237,48 @@ class BootstrapTests(unittest.TestCase):
                 flattened.extend(policy["document"]["Statement"])
             self.assertEqual(flattened, bundle[mode]["permissions"]["Statement"])
 
+    def test_cache_parameter_create_is_deploy_only_and_preserves_bundle(self):
+        # Current public-CLI baseline: preserve every old grant, including the
+        # target action's old resources; exclude only the exact added grant.
+        original = {
+            (False, False): "4369ef29f11d74c8dc9c5cb4af25e54497317b01e1cdb3495a80e8c64f30fd21",
+            (False, True): "9fa5b895f2db85d8ef57003153aa3ced8338e68de358a4c22674191063118cfc",
+            (True, False): "926d8897cf821c22b647d54f5ab1107a8cd452d1b54a8ebd635a0eced07bc937",
+            (True, True): "2b2b706e8736bc2b2ca2cacf3816b29a57800844297aa5609437a60872fb8bf0",
+        }
+        for (boundary, immutable), fingerprint in original.items():
+            with self.subTest(boundary=boundary, immutable=immutable):
+                args = self.args if boundary else self.args[:-2]
+                extra = ["--oidc-subject-prefix", IMMUTABLE_PREFIX] if immutable else []
+                before = self.fixture.read_bytes()
+                result = self.run_cli(*extra, "--aws-cli", str(self.dir / "nonexistent"), args=args)
+                self.assertEqual((result.returncode, result.stderr), (0, ""))
+                bundle = json.loads(result.stdout)
+                self.assertEqual(result.stdout, json.dumps(bundle, sort_keys=True, indent=2) + "\n")
+                self.assertEqual(self.fixture.read_bytes(), before)
+                self.assertFalse(self.output.exists())
+                for mode in ["preview", "deploy"]:
+                    role = bundle[mode]
+                    policies = role["managed_policies"]
+                    self.assertEqual([p["name"] for p in policies],
+                                     [f"prestashop-github-{mode}-{i:02}" for i in [1, 2]])
+                    self.assertEqual([s for p in policies for s in p["document"]["Statement"]],
+                                     role["permissions"]["Statement"])
+                    for p in policies:
+                        self.assertLessEqual(len(json.dumps(p["document"], separators=(",", ":"))), 6144)
+                    target = [s for s in role["permissions"]["Statement"]
+                              if CACHE_PARAMETER_GRANT["Resource"] in s["Resource"]]
+                    expected = {**CACHE_PARAMETER_GRANT,
+                                "Action": [CACHE_PARAMETER_GRANT["Action"]],
+                                "Resource": [CACHE_PARAMETER_GRANT["Resource"]]}
+                    self.assertEqual(target, [] if mode == "preview" else [expected])
+                    role["permissions"] = permission_grants(
+                        role["permissions"], exclude_grants=(CACHE_PARAMETER_GRANT,))
+                    role["managed_policies"] = [{k: v for k, v in p.items() if k != "document"}
+                                                for p in policies]
+                canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"))
+                self.assertEqual(hashlib.sha256(canonical.encode()).hexdigest(), fingerprint)
+
     def test_elb_capacity_read_is_deploy_only_and_preserves_bundle(self):
         # Captured from the previous public CLI before catalog edits. Preserve
         # all complete grants and bundle metadata except document chunk placement;
@@ -275,7 +325,8 @@ class BootstrapTests(unittest.TestCase):
                         "Action": "elasticloadbalancing:DescribeLoadBalancers", "Resource": "*",
                         "Condition": {"StringEquals": {"aws:RequestedRegion": "us-east-1"}}},
                         sort_keys=True, separators=(",", ":")), permission_grants(role["permissions"]))
-                    role["permissions"] = permission_grants(role["permissions"], exclude=action)
+                    role["permissions"] = permission_grants(
+                        role["permissions"], exclude=action, exclude_grants=(CACHE_PARAMETER_GRANT,))
                     role["managed_policies"] = [{k: v for k, v in p.items() if k != "document"}
                                                 for p in policies]
                 canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"))
@@ -335,12 +386,14 @@ class BootstrapTests(unittest.TestCase):
                         for resource in ([collection, collection[:-1] + "shop-mysql-dev"] if target else []):
                             self.assertTrue(any(fnmatch.fnmatchcase(resource, arn)
                                                 for s in target for arn in s["Resource"]))
-                    # The separately pinned ELB addition is the sole new exclusion;
+                    # Exclude the separately pinned ELB action and exact cache grant;
                     # retain all original RDS fingerprints and target assertions.
                     exclusions = (action, "elasticloadbalancing:DescribeCapacityReservation")
-                    role["permissions"] = permission_grants(role["permissions"], exclude=exclusions)
+                    role["permissions"] = permission_grants(
+                        role["permissions"], exclude=exclusions, exclude_grants=(CACHE_PARAMETER_GRANT,))
                     self.assertEqual(role["permissions"], permission_grants({"Statement": [
-                        s for p in role["managed_policies"] for s in p["document"]["Statement"]]}, exclude=exclusions))
+                        s for p in role["managed_policies"] for s in p["document"]["Statement"]]},
+                        exclude=exclusions, exclude_grants=(CACHE_PARAMETER_GRANT,)))
                     role["managed_policies"] = [{k: v for k, v in p.items() if k != "document"}
                                                 for p in role["managed_policies"]]
                 canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"))

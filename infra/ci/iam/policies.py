@@ -91,6 +91,9 @@ def render(account, region, boundary=None, subject_prefix=None):
             # All configured ARN types stay within the graph's resource families. Actions
             # which do not support resource scoping must be in a separate '*' statement.
             regional = {"StringEquals": {"aws:RequestedRegion": region}}
+            if service == "elasticache" and mode == "deploy":
+                discovery_reads.append(statement(["elasticache:CreateReplicationGroup"],
+                    [f"arn:aws:elasticache:{region}:{account}:parametergroup:*"], regional))
             scoped, unscoped = [], []
             for action in sorted(actions):
                 # Observed identifier-less discovery authorizes against db:*, not

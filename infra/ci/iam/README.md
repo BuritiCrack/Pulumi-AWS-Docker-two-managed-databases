@@ -158,7 +158,8 @@ region. These are a coarser baseline, not tag-isolated protection of unrelated
 same-account networks/filesystems. Resource-less Describe/List/provider calls,
 ECR authorization, and ECS DeregisterTaskDefinition require Resource `*`; those
 statements retain aws:RequestedRegion. No `service:*` actions are emitted.
-Default service parameter groups are read-only graph dependencies.
+Default service parameter groups are graph dependencies, not managed here; the
+ElastiCache creation authorization exception below does not permit modifying them.
 
 ### Evidenced RDS discovery exception (S1–S2)
 
@@ -226,13 +227,38 @@ Public-CLI tests cover all four boundary/prefix configurations, pin the entire
 preview and complete non-target grants/trust/backend/metadata against pre-change
 fingerprints, and retain two named policies per role within 6144 characters.
 The prior RDS fingerprints remain unchanged: their normalization now excludes
-only this separately verified ELB addition as well as the original RDS target.
+this separately verified ELB addition, the exact cache creation grant below, and
+the original RDS target.
 Tests use fresh synthetic children of the explicitly authorized container
 `C:/Users/jmbur/AppData/Local/Temp/gptBKFWX/gentle-elb-capacity-check01`, selected
 through TMP/TEMP/TMPDIR before Python starts, and remove their children in teardown.
 This source fix does not update live IAM or prove deployment success. Independent
 verification and guarded policy-version updates remain parent-owned; no deployment
 retry is authorized.
+
+### Evidenced ElastiCache creation dependency (cache-parameter-group S1–S4)
+
+The observed `CreateReplicationGroup` denial requires authorization against
+`arn:aws:elasticache:us-east-1:<ACCOUNT>:parametergroup:*`, not only the already
+allowed `parametergroup:default.redis7`. Deploy now receives a separate Allow
+for **only `elasticache:CreateReplicationGroup`** on that parameter-group family,
+within the configured account and region, with
+`StringEquals: aws:RequestedRegion = us-east-1`. The generic service resource
+union and every original grant (including this action's old resources) remain
+intact. No other action receives the family wildcard; preview stays unchanged.
+
+Public-CLI tests cover all four boundary/prefix configurations, preserve two
+existing policy names per role and the 6144-character limit, and pin all original
+grants/trust/backend/metadata. Prior RDS and ELB fingerprints remain unchanged:
+normalization excludes only the exact new action/effect/resource/condition grant,
+not the whole creation action. A temporary four-configuration differential also
+compares against the pre-change public-CLI output, including the whole preview.
+Tests select the explicitly authorized container
+`C:/Users/jmbur/AppData/Local/Temp/gptBKFWX/gentle-cache-parameter-check01`
+through TMP/TEMP/TMPDIR before Python starts; synthetic test children are removed
+in teardown. No live AWS/GitHub API, deployment or publication is performed by
+this fix. Independent verification and any guarded live IAM policy-version
+update remain parent-owned and do not authorize a deployment retry.
 
 ## Preview backend evidence (pinned Pulumi 3.212.0)
 
